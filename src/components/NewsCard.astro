@@ -1,0 +1,264 @@
+---
+import { Image } from 'astro:assets';
+import type { NewsEntry } from '../utils/news';
+import { categoryHref, categoryLabels, formatDate, newsHref } from '../utils/news';
+import { photos } from '../utils/photos';
+
+interface Props {
+	item: NewsEntry;
+	layout?: 'card' | 'row' | 'compact';
+	showCategory?: boolean;
+	/** Menonjolkan kartu sebagai berita utama (grid 1, foto penuh). */
+	featured?: boolean;
+	/** Menampilkan ringkasan singkat; dimatikan untuk baris arsip yang sempit. */
+	showExcerpt?: boolean;
+}
+
+const { item, layout = 'card', showCategory = true, featured = false, showExcerpt = true } =
+	Astro.props;
+
+const cover = item.data.cover;
+const href = newsHref(item);
+const category = item.data.category;
+const coverAlt = cover ? `${item.data.title} — ${item.data.location}` : item.data.title;
+
+// Pola "stretched link": satu tautan judul yang marryut seluruh kartu
+// (`after:inset-0`), lalu chip kategori diberi `relative z-10` agar tetap bisa
+// diklik di atasnya. Ini menggantikan <a> bersarang — `onclick` versi lama
+// tidak pernah jalan di Astro, sehingga klik chip tetap mendarat ke kartu.
+---
+
+{
+	layout === 'row' ? (
+		<article class="news-card group relative flex cursor-pointer gap-5 p-4 sm:gap-6 sm:p-5" data-reveal>
+			<div class="relative aspect-[4/3] w-28 shrink-0 overflow-hidden rounded-lg bg-news-line-soft sm:w-40">
+				{cover ? (
+					<Image
+						src={cover}
+						alt={coverAlt}
+						width={480}
+						height={360}
+						loading="lazy"
+						decoding="async"
+						class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+					/>
+				) : (
+					<Image
+						src={photos.hutanKanopi}
+						alt={coverAlt}
+						width={480}
+						height={360}
+						loading="lazy"
+						decoding="async"
+						class="h-full w-full object-cover"
+					/>
+				)}
+				<span
+					class="pointer-events-none absolute right-2 bottom-2 z-10 grid h-7 w-7 place-items-center rounded-full border border-white/30 bg-white/25 text-white shadow-md backdrop-blur-md transition-colors duration-300 group-hover:bg-white group-hover:text-ink-deep"
+					aria-hidden="true"
+				>
+					<svg class="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.75">
+						<path d="M2.5 8h11M9 3.5 13.5 8 9 12.5" stroke-linecap="round" stroke-linejoin="round" />
+					</svg>
+				</span>
+			</div>
+
+			<div class="min-w-0 flex-1">
+				<div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+					<time
+						datetime={item.data.date.toISOString()}
+						class="text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-news-muted"
+					>
+						{formatDate(item.data.date)}
+					</time>
+					{showCategory && (
+						<a
+							href={categoryHref(category)}
+							class="relative z-10 rounded-full bg-news-accent-wash px-2.5 py-1 text-[0.625rem] font-semibold uppercase tracking-[0.1em] text-news-accent transition-colors hover:bg-news-accent hover:text-white"
+						>
+							{categoryLabels[category]}
+						</a>
+					)}
+				</div>
+
+				<h3 class="mt-2.5 text-base font-semibold leading-snug text-news-ink transition-colors group-hover:text-news-accent sm:text-lg">
+					<a href={href} class="after:absolute after:inset-0 after:content-['']">
+						{item.data.title}
+					</a>
+				</h3>
+
+				<p class="mt-2 line-clamp-2 text-sm leading-relaxed text-news-body">{item.data.excerpt}</p>
+
+				{/* Affordance "Baca" sengaja bukan <a>: area klik sudah dipegang
+				    tautan judul (stretched link). Menambahkan tautan kedua di
+				    dalamnya akan membuat <a> bersarang dan merusak klik. */}
+				<span
+					class="mt-2.5 inline-flex items-center gap-1 text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-news-accent"
+				>
+					Baca
+					<svg
+						class="h-3 w-3 transition-transform duration-300 group-hover:translate-x-0.5"
+						viewBox="0 0 16 16"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.75"
+						aria-hidden="true"
+					>
+						<path d="M2.5 8h11M9 3.5 13.5 8 9 12.5" stroke-linecap="round" stroke-linejoin="round" />
+					</svg>
+				</span>
+			</div>
+		</article>
+	) : layout === 'compact' ? (
+		<article class="group relative flex cursor-pointer items-start gap-4 rounded-xl px-2 py-2.5 transition-colors hover:bg-news-accent-wash" data-reveal>
+			<div class="h-16 w-20 shrink-0 overflow-hidden rounded-lg bg-news-line-soft">
+				{cover ? (
+					<Image
+						src={cover}
+						alt={coverAlt}
+						width={240}
+						height={192}
+						loading="lazy"
+						decoding="async"
+						class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+					/>
+				) : (
+					<Image
+						src={photos.hutanKanopi}
+						alt={coverAlt}
+						width={240}
+						height={192}
+						loading="lazy"
+						decoding="async"
+						class="h-full w-full object-cover"
+					/>
+				)}
+			</div>
+			<div class="min-w-0 flex-1">
+				<time
+					datetime={item.data.date.toISOString()}
+					class="text-[0.625rem] font-semibold uppercase tracking-[0.12em] text-news-muted"
+				>
+					{formatDate(item.data.date)}
+				</time>
+				<h3 class="mt-1 line-clamp-2 text-sm font-semibold leading-snug text-news-ink transition-colors group-hover:text-news-accent">
+					<a href={href} class="after:absolute after:inset-0 after:content-['']">
+						{item.data.title}
+					</a>
+				</h3>
+			</div>
+		</article>
+	) : (
+		<article
+			class:list={[
+				'news-card group relative flex cursor-pointer flex-col',
+				featured && 'lg:col-span-2 lg:grid lg:grid-cols-2 lg:gap-0',
+			]}
+			data-reveal
+		>
+			<div
+				class:list={[
+					'relative overflow-hidden bg-news-line-soft',
+					featured ? 'aspect-[16/9] lg:aspect-auto lg:h-full lg:min-h-[22rem]' : 'aspect-[16/10]',
+				]}
+			>
+				{cover ? (
+					<Image
+						src={cover}
+						alt={coverAlt}
+						width={featured ? 1200 : 800}
+						height={featured ? 675 : 500}
+						loading="lazy"
+						decoding="async"
+						class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+					/>
+				) : (
+					<Image
+						src={photos.hutanKanopi}
+						alt={coverAlt}
+						width={featured ? 1200 : 800}
+						height={featured ? 675 : 500}
+						loading="lazy"
+						decoding="async"
+						class="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+					/>
+				)}
+
+				{/* Scrim tipis supaya glass button tetap terbaca di foto terang,
+				    lalu glass button di kanan bawah — pola card berita modern.
+				    Sengaja <span>, bukan <a>: tautan judul sudah/stretch link
+				    menjadi satu-satunya area klik kartu. */}
+				<div
+					class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/45 via-black/5 to-transparent"
+					aria-hidden="true"
+				></div>
+				<span
+					class:list={[
+						'pointer-events-none absolute right-3 bottom-3 z-10 inline-flex items-center rounded-full border border-white/30 bg-white/20 text-white shadow-lg backdrop-blur-md transition-all duration-300 group-hover:bg-white group-hover:text-ink-deep',
+						featured ? 'h-11 gap-2 pl-5 pr-4' : 'h-10 w-10 justify-center',
+					]}
+					aria-hidden="true"
+				>
+					{featured && (
+						<span class="text-xs font-semibold tracking-tight">Baca berita</span>
+					)}
+					<svg
+						class:list={['shrink-0', featured ? 'h-4 w-4' : 'h-4 w-4']}
+						viewBox="0 0 16 16"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.75"
+					>
+						<path d="M2.5 8h11M9 3.5 13.5 8 9 12.5" stroke-linecap="round" stroke-linejoin="round" />
+					</svg>
+				</span>
+			</div>
+
+			<div class:list={['flex flex-1 flex-col p-5', featured && 'lg:justify-center lg:p-10']}>
+				<div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+					<time
+						datetime={item.data.date.toISOString()}
+						class="text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-news-muted"
+					>
+						{formatDate(item.data.date)}
+					</time>
+					{showCategory && (
+						<a
+							href={categoryHref(category)}
+							class="relative z-10 rounded-full bg-news-accent-wash px-2.5 py-1 text-[0.625rem] font-semibold uppercase tracking-[0.1em] text-news-accent transition-colors hover:bg-news-accent hover:text-white"
+						>
+							{categoryLabels[category]}
+						</a>
+					)}
+				</div>
+
+				<h3
+					class:list={[
+						'mt-3 font-semibold leading-snug text-news-ink transition-colors group-hover:text-news-accent',
+						featured
+							? 'text-2xl leading-[1.2] tracking-[-0.02em] sm:text-3xl'
+							: 'text-[1.0625rem] sm:text-lg',
+					]}
+				>
+					<a href={href} class="after:absolute after:inset-0 after:content-['']">
+						{item.data.title}
+					</a>
+				</h3>
+
+				{showExcerpt && (
+					<p class="mt-3 line-clamp-2 flex-1 text-sm leading-relaxed text-news-body">
+						{item.data.excerpt}
+					</p>
+				)}
+
+				<p class="mt-4 flex min-w-0 items-center gap-1.5 text-xs font-medium text-news-muted">
+					<svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+						<path d="M8 14.5s5-4.2 5-8a5 5 0 1 0-10 0c0 3.8 5 8 5 8Z" />
+						<circle cx="8" cy="6.5" r="1.8" />
+					</svg>
+					<span class="line-clamp-1">{item.data.location}</span>
+				</p>
+			</div>
+		</article>
+	)
+}

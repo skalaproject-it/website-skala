@@ -1,0 +1,39 @@
+---
+import { Image, type ImageMetadata } from 'astro:assets';
+
+interface Props {
+	name: string;
+	role: string;
+	image?: ImageMetadata;
+	alt?: string;
+	initials?: string;
+	className?: string;
+}
+
+const { name, role, image, alt = `${name}`, initials, className = '' } = Astro.props;
+const displayInitials = initials ?? name.split(' ').map((w) => w[0] ?? '').slice(0, 2).join('').toUpperCase();
+---
+
+<figure class="group" data-reveal>
+	<div class="overflow-hidden rounded-2xl border border-ref-line bg-ink-card" data-image-reveal>
+		{image ? (
+			<Image
+				src={image}
+				alt={alt}
+				loading="lazy"
+				class="aspect-[4/5] w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+			/>
+		) : (
+			<div
+				class="grid aspect-[4/5] w-full place-items-center bg-gradient-to-br from-ink-raise via-ink-card to-olive-deep/50"
+				aria-hidden="true"
+			>
+				<span class="font-serif text-6xl text-cream/30">{displayInitials}</span>
+			</div>
+		)}
+	</div>
+	<figcaption class="mt-5">
+		<h3 class="font-sans text-[1rem] font-semibold leading-[1.4] sm:text-[1.5rem] text-cream">{name}</h3>
+		<p class="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-olive-soft">{role}</p>
+	</figcaption>
+</figure>

@@ -1,0 +1,618 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { Image } from 'astro:assets';
+import CTAButton from '../components/CTAButton.astro';
+import EyebrowTag from '../components/EyebrowTag.astro';
+import DecoRidge from '../components/DecoRidge.astro';
+import PageHero from '../components/PageHero.astro';
+import { photos, type PhotoKey } from '../utils/photos';
+import cecepSunandar from '../assets/photos/cecep-sunandar.jpg';
+
+// ============================================================================
+// Jejak pengalaman: sepuluh program terpilih lintas isu dan wilayah (2005-2024)
+// Urutan kronologis. Foto untuk program yang belum punya dokumentasi khusus
+// memakai foto dokumentasi lapangan yang netral, tanpa klaim event tertentu.
+// ============================================================================
+const milestones: {
+	year: string;
+	theme: string;
+	mitra: string;
+	desc: string;
+	figure: string;
+	unit: string;
+	photo: PhotoKey;
+	alt: string;
+}[] = [
+	{
+		year: '2005–2007',
+		theme: 'Trauma Healing Anak Pasca Tsunami',
+		mitra: 'Save the Children',
+		desc: 'Pendampingan psikososial bagi anak-anak di Kabupaten Nias pasca bencana tsunami.',
+		figure: '3',
+		unit: 'Tahun pelaksanaan',
+		photo: 'komunitasKampung',
+		alt: 'Warga bekerja bersama dalam tradisi gotong royong sebagai media komunikasi dan silaturahmi antarsesama warga',
+	},
+	{
+		year: '2005–2008',
+		theme: 'Kesiapsiagaan Bencana',
+		mitra: 'USAID',
+		desc: 'Pendampingan kesiapsiagaan dan pengurangan risiko bencana bagi komunitas di kawasan Garut.',
+		figure: '4',
+		unit: 'Tahun pelaksanaan',
+		photo: 'gotongRoyongBudaya',
+		alt: 'Gotong royong sebagai tradisi bekerja sama untuk mencapai tujuan bersama',
+	},
+	{
+		year: '2007',
+		theme: 'Kajian Sosial Agroforestri',
+		mitra: 'PT Perhutani',
+		desc: 'Kajian sosial untuk mendukung perencanaan program agroforestri di Kabupaten Garut.',
+		figure: '1',
+		unit: 'Tahun program',
+		photo: 'penelitianLapangan',
+		alt: 'Kegiatan pengumpulan data lapangan bersama warga untuk objek kajian sosial',
+	},
+	{
+		year: '2009–2015',
+		theme: 'PNPM Mandiri Perdesaan',
+		mitra: 'DPMD',
+		desc: 'Pendampingan pemberdayaan masyarakat desa di Garut dan Kuningan berbasis potensi lokal.',
+		figure: '7',
+		unit: 'Tahun pendampingan',
+		photo: 'rapatTradisi',
+		alt: 'Warga mengenakan pakaian tradisional berkumpul dalam musyawarah desa',
+	},
+	{
+		year: '2016–2018',
+		theme: 'Program Kawasan Perdesaan',
+		mitra: 'Kementerian Desa',
+		desc: 'Pendampingan pengembangan kawasan perdesaan terpadu di Kabupaten Garut.',
+		figure: '3',
+		unit: 'Tahun program',
+		photo: 'tanamBersama',
+		alt: 'Warga menanam bersama di lahan perdesaan',
+	},
+	{
+		year: '2016–2022',
+		theme: 'PAMSIMAS',
+		mitra: 'Dinas Pekerjaan Umum dan Perumahan Rakyat Jawa Barat',
+		desc: 'Dukungan penyediaan air minum dan sanitasi berbasis masyarakat di Kabupaten Garut.',
+		figure: '7',
+		unit: 'Tahun pendampingan',
+		photo: 'anakPohon',
+		alt: 'Anak pohon tumbuh di bawah kanopi hutan',
+	},
+	{
+		year: '2017',
+		theme: 'Feasibility Study Agrowisata',
+		mitra: 'Dinas Pertanian Garut',
+		desc: 'Studi kelayakan pengembangan agrowisata di Kabupaten Garut.',
+		figure: '1',
+		unit: 'Tahun program',
+		photo: 'petaniSawah',
+		alt: 'Persawahan yang dikelola petani di wilayah Kabupaten Garut',
+	},
+	{
+		year: '2017–2019',
+		theme: 'Penguatan Kelompok UMKM',
+		mitra: 'UPK Kec. Cibalong',
+		desc: 'Penguatan kapasitas dan akses kelompok usaha di kawasan Cibalong, Garut.',
+		figure: '3',
+		unit: 'Tahun program',
+		photo: 'umkmTenun',
+		alt: 'Perajin menganyam kain tenun tradisional dengan alat tenun bukan mesin',
+	},
+	{
+		year: '2022',
+		theme: 'Pendampingan TPS3R',
+		mitra: 'Dinas Lingkungan Hidup',
+		desc: 'Pendampingan pengelolaan sampah berbasis masyarakat di Kabupaten Garut.',
+		figure: '1',
+		unit: 'Tahun program',
+		photo: 'sukarelawan',
+		alt: 'Relawan dan petugas kebersihan bekerja sama membersihkan sungai',
+	},
+	{
+		year: '2022–2024',
+		theme: 'Percepatan Penurunan Stunting',
+		mitra: 'BKKBN',
+		desc: 'Intervensi gizi dan penguatan kapasitas kader masyarakat di Kabupaten Garut.',
+		figure: '3',
+		unit: 'Tahun program',
+		photo: 'rapatMasyarakat',
+		alt: 'Warga desa berdiskusi dalam musyawarah untuk menentukan arah pembangunan desa',
+	},
+];
+
+const values: { title: string; desc: string; icon: string; photo: PhotoKey; alt: string }[] = [
+	{
+		title: 'Berbasis Data',
+		desc: 'Analisis dan rekomendasi program ditopang oleh data, observasi lapangan, dan dokumentasi yang konsisten.',
+		icon: '<path d="M3 3v18h18"/><path d="M8 13v5"/><path d="M13 9v9"/><path d="M18 5v13"/>',
+		photo: 'penelitianLapangan',
+		alt: 'Researchers collecting data in a forest field plot',
+	},
+	{
+		title: 'Komunitas Sebagai Pelaku',
+		desc: 'Masyarakat adalah pelaku utama program, bukan sekadar penerima manfaat — partisipasi dibangun sejak tahap perencanaan.',
+		icon: '<path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>',
+		photo: 'rapatTradisi',
+		alt: 'Villagers wearing traditional clothing gathered at a community meeting',
+	},
+	{
+		title: 'Transparan & Akuntabel',
+		desc: 'Peran, keluaran, indikator, dan perubahan program didokumentasikan secara transparan dan dapat diaudit.',
+		icon: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/>',
+		photo: 'rapatMasyarakat',
+		alt: 'Warga desa berdiskusi dalam musyawarah untuk menentukan arah pembangunan desa',
+	},
+	{
+		title: 'Adaptif & Inovatif',
+		desc: 'Pendekatan lentur yang membaca konteks lapangan tanpa kehilangan tujuan, didukung pengembangan kajian dan inovasi sosial berkelanjutan.',
+		icon: '<path d="M7 20h10"/><path d="M12 20v-8"/><path d="M12 12c0-3 2.5-5 5-5 0 3-2.5 5-5 5Zm0 0c0-3-2.5-5-5-5 0 3 2.5 5 5 5Z"/>',
+		photo: 'workshopLapangan',
+		alt: 'Participants collaborating around a table during a field workshop',
+	},
+];
+
+const visionItems = [
+	'Masyarakat yang mandiri, adil, dan berkelanjutan.',
+	'Kelestarian lingkungan lewat pendekatan berbasis komunitas.',
+	'Ketahanan sosial-ekologis untuk generasi mendatang.',
+];
+
+const missionItems = [
+	'Mendorong pemberdayaan masyarakat berbasis potensi lokal dan kearifan tradisional.',
+	'Melestarikan lingkungan melalui pendidikan, advokasi, dan aksi nyata berbasis komunitas.',
+	'Menjadi mitra strategis dalam pengelolaan program CSR/TJSL yang berkelanjutan dan berdampak.',
+	'Mengembangkan kajian, pelatihan, dan inovasi sosial untuk memperkuat kapasitas pemangku kepentingan.',
+];
+
+const coreTeam = [
+	{ name: 'Mardiana Sidiq', role: 'Direktur', initials: 'MS', linkedin: '#' },
+	{ name: 'Cepi Firmansyah', role: 'Manager Program', initials: 'CF', linkedin: '#' },
+	{ name: 'Cecep Sunandar', role: 'Divisi Community Development', initials: 'CS', image: cecepSunandar, linkedin: '#' },
+	{ name: 'Usep Tedi Gunawan', role: 'Divisi Capacity Building', initials: 'UT', linkedin: '#' },
+];
+---
+
+<Layout
+	title="Tentang SKALA | Yayasan Konservasi"
+	description="Visi, misi, nilai, perjalanan, dan tim inti Yayasan SKALA dalam memulihkan ekosistem bersama Kelompok Tani Hutan."
+>
+	<!-- Hero -->
+	<PageHero
+		image={photos.workshopLapangan}
+		alt="Workshop lapangan pemetaan sosial bersama warga Desa Padaawas dan Karyamekar, Kabupaten Garut"
+		position="center 45%"
+	>
+		<h1 class="hero-title" data-reveal>
+			Bersama Komunitas, Melestarikan Alam
+		</h1>
+		<p class="hero-lead" data-reveal>
+			SKALA hadir sebagai katalisator kolaborasi antara komunitas, perusahaan, pemerintah, dan mitra pembangunan,
+			menempatkan masyarakat sebagai pelaku utama — bukan sekadar penerima manfaat.
+		</p>
+	</PageHero>
+
+	<!-- Pesan -->
+	<section class="container-skala py-24 lg:py-32">
+		<div class="grid gap-16 lg:gap-20">
+			<!-- atas -->
+			<div class="flex flex-col items-start justify-between gap-10 lg:flex-row lg:items-end">
+				<div class="max-w-3xl" data-reveal-group>
+					<EyebrowTag text="Tentang SKALA" />
+					<p class="mt-7 font-serif text-2xl font-medium leading-[1.4] text-cream lg:text-[32px]" data-reveal>
+						SKALA hadir dari keyakinan bahwa komunitas dan alam tidak bisa dipisahkan — menjaga satu berarti
+						merawat yang lain.
+					</p>
+				</div>
+				<div data-reveal>
+    <CTAButton href="/program" variant="primary">Lihat Portofolio Program</CTAButton>
+				</div>
+			</div>
+
+			<!-- bawah: direktur -->
+			<div class="grid items-end gap-12 lg:grid-cols-[1fr_1fr]">
+				<div class="flex items-end gap-6" data-reveal>
+					<div
+						class="grid h-[120px] w-[120px] shrink-0 place-items-center overflow-hidden rounded-2xl bg-gradient-to-br from-ink-raise via-ink-card to-olive-deep/50"
+						data-image-reveal
+					>
+						<span class="font-serif text-4xl font-semibold text-cream/30">MS</span>
+					</div>
+					<div class="pb-1">
+						<p class="font-serif text-2xl font-medium text-olive">Mardiana Sidiq</p>
+						<p class="mt-1 text-sm text-cream-dim">Direktur SKALA</p>
+					</div>
+				</div>
+				<div class="flex flex-col gap-4" data-reveal>
+					<p class="font-serif text-lg font-semibold leading-snug text-olive">
+						Tanggung Jawab Bersama
+					</p>
+					<p class="text-base font-light leading-[1.5] text-cream-dim">
+						Melindungi alam adalah tanggung jawab bersama, dan cara terbaik melakukannya adalah bersama komunitas.
+					</p>
+					<p class="text-base font-light leading-[1.5] text-cream-dim">
+						Sebagai lembaga yang tumbuh dari pengalaman lapangan sejak awal 2000-an, SKALA mendampingi masyarakat,
+						perusahaan, dan pemerintah membangun kolaborasi yang berkelanjutan — bukan sekadar program yang
+						berhenti saat pendanaan usai.
+					</p>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<!-- Nilai & Kapabilitas -->
+	<section class="container-skala pb-24 lg:pb-32">
+		<div class="relative overflow-hidden rounded-2xl bg-ink-card p-8 lg:p-10" data-reveal>
+			<!-- dekoratif: garis kontur -->
+			<svg
+				class="pointer-events-none absolute inset-0 h-full w-full overflow-hidden opacity-[0.08]"
+				viewBox="0 0 1200 400"
+				fill="none"
+				preserveAspectRatio="none"
+				aria-hidden="true"
+			>
+				<path d="M0 70 Q150 10 300 70 Q450 130 600 70 Q750 10 900 70 Q1050 130 1200 70" stroke="#666832" stroke-width="1.5" />
+				<path d="M0 140 Q150 80 300 140 Q450 200 600 140 Q750 80 900 140 Q1050 200 1200 140" stroke="#666832" stroke-width="1.5" />
+				<path d="M0 210 Q150 150 300 210 Q450 270 600 210 Q750 150 900 210 Q1050 270 1200 210" stroke="#666832" stroke-width="1.5" />
+				<path d="M0 280 Q150 220 300 280 Q450 340 600 280 Q750 220 900 280 Q1050 340 1200 280" stroke="#666832" stroke-width="1.5" />
+				<path d="M0 350 Q150 290 300 350 Q450 410 600 350 Q750 290 900 350 Q1050 410 1200 350" stroke="#666832" stroke-width="1.5" />
+			</svg>
+
+			<div class="relative flex flex-col items-start justify-between gap-10 lg:flex-row lg:items-end" data-reveal-group>
+				<div class="max-w-xl">
+					<EyebrowTag text="Nilai & Kapabilitas" />
+					<h2 class="mt-6 font-serif text-[30px] font-semibold leading-[1.2] text-olive sm:text-[42px] lg:text-[50px] xl:text-[56px]" data-reveal>
+						Nilai yang Menuntun Kami
+					</h2>
+				</div>
+				<div class="flex w-full items-center justify-between gap-6 lg:w-auto lg:justify-end" data-reveal>
+					{[
+						{ fig: '20+', label: 'Tahun pengalaman' },
+						{ fig: '13+', label: 'Program terpilih' },
+						{ fig: '4', label: 'Pilar kapabilitas' },
+					].map((stat) => (
+						<div class="flex flex-col gap-2 lg:min-w-28" data-reveal>
+							<p class="font-serif text-3xl font-semibold tabular-nums text-olive">{stat.fig}</p>
+							<p class="text-sm text-cream-dim">{stat.label}</p>
+						</div>
+					))}
+				</div>
+			</div>
+
+			<div class="relative mt-14 grid gap-6 sm:grid-cols-2 xl:grid-cols-4" data-reveal-group>
+				{values.map((value) => (
+					<div class="flex flex-col gap-8 rounded-2xl bg-ink p-4 pb-6" data-reveal>
+						<div
+							class="h-44 w-full overflow-hidden rounded-2xl bg-ink-raise"
+							data-image-reveal
+						>
+							<Image
+								src={photos[value.photo]}
+								alt={value.alt}
+								width={600}
+								height={400}
+								loading="lazy"
+								decoding="async"
+								class="h-full w-full object-cover"
+							/>
+						</div>
+						<div class="flex flex-col gap-3 px-2">
+							<span class="grid h-12 w-12 place-items-center rounded-full bg-olive text-ink">
+								<svg
+									class="h-6 w-6"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="1.6"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									aria-hidden="true"
+									set:html={value.icon}
+								></svg>
+							</span>
+							<h3 class="font-sans text-[1rem] font-semibold leading-[1.4] sm:text-[1.5rem] text-cream">{value.title}</h3>
+							<p class="text-sm font-light leading-[1.5] text-cream-dim">{value.desc}</p>
+						</div>
+					</div>
+				))}
+			</div>
+		</div>
+	</section>
+
+	<!-- Visi & Misi -->
+	<section class="container-skala py-24 lg:py-32" data-reveal-group>
+		<div class="mx-auto max-w-2xl text-center">
+			<EyebrowTag text="Visi & Misi" />
+			<h2 class="mt-6 font-serif text-[30px] font-semibold leading-[1.2] text-olive sm:text-[42px] lg:text-[50px] xl:text-[56px]" data-reveal>
+				Komitmen kami untuk masa depan
+			</h2>
+		</div>
+
+		<div class="mt-14 grid items-center gap-12 lg:grid-cols-[0.4fr_0.6fr] lg:gap-16" data-about-tabs>
+			<div data-reveal>
+				<div class="flex border-b border-ink-rule" role="tablist" aria-label="Visi dan Misi">
+					<button
+						type="button"
+						role="tab"
+						aria-selected="true"
+						data-tab-btn
+						data-active="true"
+						class="w-full border-b-[2.5px] border-olive pb-3 text-left font-serif text-lg font-medium text-olive transition-colors duration-200"
+					>
+						Visi
+					</button>
+					<button
+						type="button"
+						role="tab"
+						aria-selected="false"
+						data-tab-btn
+						data-active="false"
+						class="w-full border-b-[2.5px] border-transparent pb-3 text-left font-serif text-lg font-medium text-cream-dim transition-colors duration-200"
+					>
+						Misi
+					</button>
+				</div>
+
+				<!-- Visi -->
+				<div data-tab-pane class="mt-10 flex flex-col gap-8">
+					<h3 class="font-sans text-[1rem] font-semibold leading-[1.4] sm:text-[1.5rem] text-cream">Rujukan untuk masyarakat yang mandiri</h3>
+					<ul class="flex flex-col gap-4">
+						{visionItems.map((item) => (
+							<li class="flex items-start gap-3" data-reveal>
+								<span class="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-olive text-ink">
+									<svg
+										class="h-3 w-3"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2.5"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										aria-hidden="true"
+									>
+										<path d="M20 6 9 17l-5-5" />
+									</svg>
+								</span>
+								<p class="text-base text-cream">{item}</p>
+							</li>
+						))}
+					</ul>
+					<p class="text-base font-light leading-[1.5] text-cream-dim">
+						Menjadi lembaga rujukan dalam mendorong masyarakat yang mandiri, adil, dan berkelanjutan melalui
+						pendekatan berbasis komunitas dan kelestarian lingkungan.
+					</p>
+				</div>
+
+				<!-- Misi -->
+				<div data-tab-pane class="mt-10 hidden flex-col gap-8">
+					<h3 class="font-sans text-[1rem] font-semibold leading-[1.4] sm:text-[1.5rem] text-cream">Empat komitmen utama</h3>
+					<ul class="flex flex-col gap-5">
+						{missionItems.map((item, i) => (
+							<li class="flex items-start gap-4" data-reveal>
+								<span class="font-serif text-sm font-semibold tabular-nums text-olive">{String(i + 1).padStart(2, '0')}</span>
+								<p class="text-base leading-[1.5] text-cream">{item}</p>
+							</li>
+						))}
+					</ul>
+				</div>
+			</div>
+
+			<div
+				class="h-[320px] w-full overflow-hidden rounded-2xl bg-ink-raise lg:h-[420px]"
+				data-image-reveal
+				data-reveal
+			>
+				<Image
+					src={photos.hutanAerial}
+					alt="Aerial view of dense tropical rainforest canopy in Central Kalimantan, Indonesia"
+					width={900}
+					height={900}
+					loading="lazy"
+					decoding="async"
+					class="h-full w-full object-cover"
+				/>
+			</div>
+		</div>
+	</section>
+
+	<!-- CTA Band -->
+	<section class="container-skala pb-24 lg:pb-32">
+		<div class="relative flex flex-col justify-between gap-12 overflow-hidden rounded-2xl bg-olive p-8 text-ink sm:p-10 lg:h-[420px] lg:flex-row lg:p-12">
+			<DecoRidge class="pointer-events-none absolute bottom-0 left-0 w-full" />
+
+			<div class="relative z-[1] flex h-full max-w-xl flex-col items-start justify-between gap-10" data-reveal-group>
+				<h2 class="font-serif text-3xl font-semibold leading-tight text-white sm:text-4xl lg:text-5xl" data-reveal>
+					Bersama, Kita Bisa Membangun Dampak yang Bertahan
+				</h2>
+				<div data-reveal>
+					<a
+						href="/metodologi"
+						class="group inline-flex items-center gap-4 rounded-full bg-ink py-2 pl-6 pr-2 text-base font-semibold text-olive transition-colors duration-300 hover:bg-ink-raise"
+					>
+						<span class="block whitespace-nowrap">Lihat Metodologi</span>
+						<span class="grid h-9 w-9 place-items-center rounded-full bg-olive text-ink transition-transform duration-300 group-hover:rotate-45">
+							<svg
+								class="h-5 w-5"
+								viewBox="0 0 20 20"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="1.7"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								aria-hidden="true"
+							>
+								<path d="M5 15L15 5" />
+								<path d="M6.875 5H15V13.125" />
+							</svg>
+						</span>
+					</a>
+				</div>
+			</div>
+
+			<div class="relative z-[1] flex max-w-md flex-col gap-4" data-reveal>
+				<p class="text-sm font-semibold uppercase tracking-[0.14em] text-ink/70">Jaga Alam, Lindungi Kehidupan</p>
+				<p class="text-base font-light leading-[1.5] text-ink/80">
+					Dukungan dan kemitraan Anda membantu SKALA mendampingi komunitas, melestarikan alam, dan mengamankan
+					masa depan yang berkelanjutan.
+				</p>
+			</div>
+		</div>
+	</section>
+
+	<!-- Jejak Pengalaman -->
+	<section class="container-skala py-24 lg:py-32" data-reveal-group>
+		<div class="max-w-2xl">
+			<EyebrowTag text="Jejak Pengalaman" />
+			<h2 class="mt-6 font-serif text-[30px] font-semibold leading-[1.2] text-olive sm:text-[42px] lg:text-[50px] xl:text-[56px]" data-reveal>
+				Perjalanan yang Menjadi Bekal
+			</h2>
+			<p class="mt-4 text-base font-light leading-[1.5] text-cream-dim" data-reveal>
+				Dua dekade mendampingi komunitas lintas isu dan wilayah — bersama pemerintah, perusahaan, dan mitra pembangunan.
+			</p>
+		</div>
+
+		<div class="mt-12" data-reveal-group>
+			{milestones.map((item) => (
+				<div class="grid gap-8 border-b border-ink-rule py-10 last:border-b-0 lg:grid-cols-[0.35fr_0.65fr] lg:gap-16" data-reveal>
+					<div class="flex flex-col gap-2 lg:justify-between">
+						<div class="flex flex-col gap-2">
+							<h3 class="font-sans text-[1rem] font-semibold leading-[1.4] sm:text-[1.5rem] text-cream lg:text-2xl">{item.year}</h3>
+							<p class="text-sm text-cream-dim">{item.theme}</p>
+						</div>
+						<p class="font-serif text-base font-semibold text-cream">{item.mitra}</p>
+					</div>
+					<div class="grid gap-8 sm:grid-cols-[240px_1fr] sm:items-center lg:gap-10">
+						<div
+							class="h-[200px] w-full overflow-hidden rounded-2xl bg-ink-raise"
+							data-image-reveal
+						>
+							<Image
+								src={photos[item.photo]}
+								alt={item.alt}
+								width={480}
+								height={400}
+								loading="lazy"
+								decoding="async"
+								class="h-full w-full object-cover"
+							/>
+						</div>
+						<div class="flex flex-col justify-between gap-6 sm:gap-10">
+							<p class="text-sm font-light leading-[1.5] text-cream-dim lg:text-base">{item.desc}</p>
+							<div class="flex items-center gap-6">
+								<p class="font-serif text-5xl font-semibold tabular-nums text-olive lg:text-6xl">{item.figure}</p>
+								<p class="max-w-24 text-sm text-cream-dim">{item.unit}</p>
+							</div>
+						</div>
+					</div>
+				</div>
+			))}
+		</div>
+
+		<p class="mt-12 text-sm leading-[1.5] text-cream-dim" data-reveal>
+			Lintas mitra: pemerintah daerah, kementerian/lembaga,
+			perusahaan, dan organisasi internasional.
+		</p>
+	</section>
+
+	<!-- Tim -->
+	<section class="container-skala pb-24 lg:pb-32" data-reveal-group>
+		<div class="grid items-end gap-8 lg:grid-cols-[0.6fr_0.4fr]">
+			<div>
+				<EyebrowTag text="Tim Inti" />
+				<h2 class="mt-6 font-serif text-[30px] font-semibold leading-[1.2] text-olive sm:text-[42px] lg:text-[50px] xl:text-[56px]" data-reveal>
+					Sosok di Balik Program
+				</h2>
+			</div>
+			<p class="text-base font-light leading-[1.5] text-cream-dim lg:pb-1" data-reveal>
+				Tim konservasi, pemberdayaan komunitas, dan kapasitas internal yang bersatu dalam satu tujuan. Struktur
+				lengkap tersedia di halaman
+				<a href="/tata-kelola" class="font-semibold text-olive hover:underline">Tata Kelola</a>.
+			</p>
+		</div>
+
+		<div class="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4" data-reveal-group>
+			{coreTeam.map((person) => (
+				<div class="group relative h-[360px] overflow-hidden rounded-2xl" data-reveal>
+					{person.image ? (
+						<Image
+							src={person.image}
+							alt={person.name}
+							loading="lazy"
+							class="absolute inset-0 h-full w-full object-cover"
+							data-image-reveal
+						/>
+					) : (
+						<div
+							class="absolute inset-0 grid place-items-center bg-gradient-to-br from-ink-raise via-ink-card to-olive-deep/50"
+							data-image-reveal
+						>
+							<span class="font-serif text-7xl font-semibold text-cream/25">{person.initials}</span>
+						</div>
+					)}
+					<div class="pointer-events-none absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-black/60 to-transparent"></div>
+					<div class="absolute inset-x-4 bottom-4 z-[1] flex items-center justify-between gap-4 rounded-2xl bg-white/15 p-2 pl-6 shadow-[inset_0_2px_rgb(255_255_255/0.2)] backdrop-blur-md">
+						<div>
+							<h3 class="font-sans text-[1.125rem] font-semibold leading-[1.4] text-white">{person.name}</h3>
+							<p class="mt-0.5 text-sm text-white/85">{person.role}</p>
+						</div>
+						<a
+							href={person.linkedin}
+							target="_blank"
+							rel="noopener noreferrer"
+							aria-label={`LinkedIn ${person.name}`}
+							class="group/socmed relative grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/15 text-white shadow-[inset_0_2px_rgb(255_255_255/0.2)] transition-colors duration-300 hover:bg-white/25 focus-visible:bg-white/25"
+						>
+							<svg
+								class="h-[18px] w-[18px] transition-opacity duration-300 group-hover/socmed:opacity-0"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="1.8"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								aria-hidden="true"
+							>
+								<path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+								<rect width="4" height="12" x="2" y="9" />
+								<circle cx="4" cy="4" r="2" />
+							</svg>
+							<svg
+								class="pointer-events-none absolute h-[18px] w-[18px] opacity-0 transition-opacity duration-300 group-hover/socmed:opacity-100"
+								viewBox="0 0 24 24"
+								fill="currentColor"
+								aria-hidden="true"
+							>
+								<path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+							</svg>
+						</a>
+					</div>
+				</div>
+			))}
+		</div>
+	</section>
+</Layout>
+
+<script>
+	document.addEventListener('click', (event) => {
+		const root = (event.target as HTMLElement).closest('[data-about-tabs]');
+		if (!root) return;
+		const btn = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-tab-btn]');
+		if (!btn) return;
+		const index = [...root.querySelectorAll('[data-tab-btn]')].indexOf(btn);
+		root.querySelectorAll('[data-tab-btn]').forEach((tab, i) => {
+			const active = i === index;
+			tab.setAttribute('aria-selected', String(active));
+			(tab as HTMLElement).dataset.active = String(active);
+			(tab as HTMLElement).className = active
+				? 'w-full border-b-[2.5px] border-olive pb-3 text-left font-serif text-lg font-medium text-olive transition-colors duration-200'
+				: 'w-full border-b-[2.5px] border-transparent pb-3 text-left font-serif text-lg font-medium text-cream-dim transition-colors duration-200';
+		});
+		root.querySelectorAll('[data-tab-pane]').forEach((pane, i) => {
+			pane.classList.toggle('hidden', i !== index);
+		});
+	});
+</script>

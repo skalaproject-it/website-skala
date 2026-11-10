@@ -1,0 +1,63 @@
+---
+import { Image } from 'astro:assets';
+import CTAButton from './CTAButton.astro';
+
+interface Props {
+	category: string;
+	title: string;
+	description?: string;
+	image?: string;
+	alt?: string;
+	ctaLabel?: string;
+	ctaHref?: string;
+	aspectClass?: string;
+	className?: string;
+}
+
+const {
+	category,
+	title,
+	description,
+	image,
+	alt = '',
+	ctaLabel = 'Pelajari lebih lanjut',
+	ctaHref = '#',
+	aspectClass = 'aspect-[4/5]',
+	className = '',
+} = Astro.props;
+---
+
+<figure class={className} data-reveal>
+	<div class="rounded-3xl border border-ref-line bg-ink-card" data-image-reveal>
+		{image ? (
+			<Image
+				src={image}
+				alt={alt}
+				loading="lazy"
+				class={`w-full rounded-3xl object-cover ${aspectClass}`}
+			/>
+		) : (
+			<div
+				class={`flex w-full items-end justify-end rounded-3xl bg-gradient-to-br from-ink-raise via-ink-card to-olive-deep/60 p-6 ${aspectClass}`}
+				aria-hidden="true"
+			>
+				<svg class="h-16 w-16 text-olive-soft/40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+					<path d="M20 10c0 4.993-5.539 10.193-7.399 11.799a1 1 0 0 1-1.202 0C9.539 20.193 4 14.993 4 10a8 8 0 0 1 16 0" />
+					<circle cx="12" cy="10" r="3" />
+				</svg>
+			</div>
+		)}
+	</div>
+
+	<figcaption
+		class="max-w-sm rounded-2xl border border-ref-line bg-ink-card/95 p-6 shadow-2xl shadow-black/30 backdrop-blur
+		mx-6 -mt-14 relative lg:-translate-y-6"
+	>
+		<p class="text-[10px] font-semibold uppercase tracking-[0.2em] text-olive-soft">{category}</p>
+		<h3 class="mt-2 font-sans text-[1rem] font-semibold leading-[1.4] sm:text-[1.5rem] text-cream">{title}</h3>
+		{description && <p class="mt-2 text-sm leading-[1.5] text-cream/60">{description}</p>}
+		<div class="mt-4">
+			<CTAButton href={ctaHref} variant="outline" size="sm">{ctaLabel}</CTAButton>
+		</div>
+	</figcaption>
+</figure>

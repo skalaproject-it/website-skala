@@ -1,0 +1,141 @@
+---
+import type { NavItem } from '../data/navigation';
+
+interface Props {
+	items: NavItem[];
+	mode: 'desktop' | 'mobile';
+}
+
+const { items, mode } = Astro.props;
+
+const currentPath = Astro.url.pathname.replace(/\/+$/, '') || '/';
+const isMatch = (href: string): boolean => currentPath === href;
+const isSection = (href: string): boolean =>
+	href === '/' ? currentPath === '/' : currentPath === href || currentPath.startsWith(href + '/');
+const itemCurrent = (item: NavItem): boolean =>
+	isSection(item.href) || Boolean(item.children?.some((child) => isMatch(child.href)));
+---
+
+{
+	mode === 'desktop' ? (
+		<nav aria-label="Navigasi utama" class="hidden xl:block">
+			<ul class="flex items-center gap-1">
+				{items.map((item) =>
+					item.children ? (
+						<li class="dropdown relative" data-dropdown>
+							<button
+								type="button"
+								class:list={['nav-link flex items-center gap-1']}
+								data-current={itemCurrent(item) ? 'true' : undefined}
+								data-dd-toggle
+								aria-haspopup="true"
+								aria-expanded="false"
+								aria-current={itemCurrent(item) ? 'page' : undefined}
+							>
+								{item.label}
+								<svg
+									class="dd-chevron ml-1 h-3.5 w-3.5"
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									aria-hidden="true"
+								>
+									<path d="m6 9 6 6 6-6" />
+								</svg>
+							</button>
+							<ul class="dd-menu" data-dd-menu>
+								{item.children.map((child) => (
+									<li>
+										<a
+											href={child.href}
+											class:list={['dd-link', { 'bg-white/10 text-white': isMatch(child.href) }]}
+											aria-current={isMatch(child.href) ? 'page' : undefined}
+										>
+											{child.label}
+										</a>
+									</li>
+								))}
+							</ul>
+						</li>
+					) : (
+						<li>
+							<a
+								href={item.href}
+								class:list={['nav-link block']}
+								data-current={itemCurrent(item) ? 'true' : undefined}
+								aria-current={isMatch(item.href) ? 'page' : undefined}
+							>
+								{item.label}
+							</a>
+						</li>
+					),
+				)}
+			</ul>
+		</nav>
+	) : (
+		<nav aria-label="Navigasi utama" class="px-6 pb-8 pt-2">
+			<ul class="divide-y divide-white/5">
+				{items.map((item) =>
+					item.children ? (
+						<li>
+							<details class="group">
+								<summary class="flex cursor-pointer list-none items-center justify-between py-4 text-base font-semibold text-white [&::-webkit-details-marker]:hidden">
+									{item.label}
+									<svg
+										class="h-4 w-4 text-white/60 transition-transform duration-300 group-open:rotate-180"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										aria-hidden="true"
+									>
+										<path d="m6 9 6 6 6-6" />
+									</svg>
+								</summary>
+								<div class="acc">
+									<div class="acc-inner">
+										<ul class="mb-4 flex flex-col border-l border-white/10 pl-4">
+											{item.children.map((child) => (
+												<li>
+													<a
+														href={child.href}
+														class:list={[
+															'flex min-h-11 items-center rounded-lg px-2 py-2.5 text-sm text-white/80 transition-colors hover:bg-white/10 hover:text-white',
+															{ 'bg-white/10 text-white': isMatch(child.href) },
+														]}
+														aria-current={isMatch(child.href) ? 'page' : undefined}
+													>
+														{child.label}
+													</a>
+												</li>
+											))}
+										</ul>
+									</div>
+								</div>
+							</details>
+						</li>
+					) : (
+						<li>
+							<a
+								href={item.href}
+								class:list={[
+									'block rounded-lg px-2 py-4 text-base font-semibold text-white transition-colors hover:bg-white/10',
+									{ 'bg-white/10': isSection(item.href) },
+								]}
+								aria-current={isMatch(item.href) ? 'page' : undefined}
+							>
+								{item.label}
+							</a>
+						</li>
+					),
+				)}
+			</ul>
+			<a href="/kemitraan" class="mt-4 flex min-h-12 items-center justify-center rounded-full bg-white px-5 py-3 font-semibold text-olive" aria-current={isMatch('/kemitraan') ? 'page' : undefined}>Bermitra dengan Kami</a>
+		</nav>
+	)
+}

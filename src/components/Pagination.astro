@@ -1,0 +1,85 @@
+---
+import type { Page } from 'astro';
+
+interface Props {
+	page: Page<unknown>;
+	/** Prefix rute paging. Default "/berita". */
+	base?: string;
+}
+
+const { page, base = '/berita' } = Astro.props;
+
+const pages = Array.from({ length: page.lastPage }, (_, index) => index + 1);
+const hrefFor = (n: number): string => (n === 1 ? base : `${base}/${n}`);
+
+const base_ =
+	'grid h-11 min-w-11 place-items-center rounded-xl px-3 text-sm font-semibold transition-colors duration-200';
+---
+
+{
+	page.lastPage > 1 && (
+		<nav class="mt-16 flex flex-col items-center gap-5" aria-label="Paginasi berita">
+			<div class="flex flex-wrap items-center justify-center gap-2">
+				{page.url.prev ? (
+					<a
+						href={page.url.prev}
+						class:list={[base_, 'border border-news-line bg-news-surface text-news-body hover:border-news-accent hover:text-news-accent']}
+						aria-label="Halaman sebelumnya"
+					>
+						<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+							<path d="M19 12H5" />
+							<path d="m12 19-7-7 7-7" />
+						</svg>
+					</a>
+				) : (
+					<span class:list={[base_, 'border border-news-line-soft text-news-muted/40']} aria-hidden="true">
+						<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<path d="M19 12H5" />
+							<path d="m12 19-7-7 7-7" />
+						</svg>
+					</span>
+				)}
+
+				{pages.map((n) =>
+					n === page.currentPage ? (
+						<span class:list={[base_, 'bg-news-accent text-white']} aria-current="page">
+							{n}
+						</span>
+					) : (
+						<a
+							href={hrefFor(n)}
+							class:list={[base_, 'border border-news-line bg-news-surface text-news-body hover:border-news-accent hover:text-news-accent']}
+						>
+							{n}
+						</a>
+					),
+				)}
+
+				{page.url.next ? (
+					<a
+						href={page.url.next}
+						class:list={[base_, 'border border-news-line bg-news-surface text-news-body hover:border-news-accent hover:text-news-accent']}
+						aria-label="Halaman berikutnya"
+					>
+						<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+							<path d="M5 12h14" />
+							<path d="m12 5 7 7-7 7" />
+						</svg>
+					</a>
+				) : (
+					<span class:list={[base_, 'border border-news-line-soft text-news-muted/40']} aria-hidden="true">
+						<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+							<path d="M5 12h14" />
+							<path d="m12 5 7 7-7 7" />
+						</svg>
+					</span>
+				)}
+			</div>
+
+			<p class="text-xs font-medium text-news-muted">
+				{/* start & end keduanya index 0-based, jadi +1 agar tampil 1-6 bukan 1-5. */}
+				Menampilkan {page.start + 1}–{page.end + 1} dari {page.total} berita
+			</p>
+		</nav>
+	)
+}

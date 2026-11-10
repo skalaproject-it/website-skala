@@ -1,0 +1,35 @@
+---
+interface Props {
+	status: 'planned' | 'active' | 'completed' | 'fundraising';
+	tone?: 'light' | 'dark';
+}
+
+const { status, tone = 'light' } = Astro.props;
+
+const labels: Record<Props['status'], string> = {
+	planned: 'Direncanakan',
+	active: 'Berjalan',
+	completed: 'Selesai',
+	fundraising: 'Mencari Mitra Pendanaan',
+};
+
+const light: Record<Props['status'], string> = {
+	planned: 'border border-black/15 bg-black/5 text-cream/80',
+	active: 'border border-transparent bg-olive text-ink',
+	completed: 'border border-black/20 bg-black/10 text-cream',
+	fundraising: 'border border-olive-soft/40 bg-olive/20 text-olive',
+};
+
+const dark: Record<Props['status'], string> = {
+	planned: 'border border-white/25 bg-white/10 text-white/80',
+	active: 'border border-transparent bg-olive text-ink',
+	completed: 'border border-white/25 bg-white/15 text-white',
+	fundraising: 'border border-white/25 bg-white/10 text-white/85',
+};
+
+const styles = tone === 'dark' ? dark : light;
+---
+
+<span class={`inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-semibold ${styles[status]}`}>
+	{labels[status]}
+</span>

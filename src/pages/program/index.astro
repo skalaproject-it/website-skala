@@ -1,0 +1,131 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { Image, getImage } from 'astro:assets';
+import PageHero from '../../components/PageHero.astro';
+import EyebrowTag from '../../components/EyebrowTag.astro';
+import CTAButton from '../../components/CTAButton.astro';
+import StatusBadge from '../../components/StatusBadge.astro';
+import IndonesiaProgramMap from '../../components/IndonesiaProgramMap.astro';
+import { getCollection } from 'astro:content';
+import { projectCategories, categoryLabel, statusLabel, fmtArea } from '../../utils/project';
+import { photoByProject, photos } from '../../utils/photos';
+
+const projects = (await getCollection('projects')).sort((a, b) => {
+	const rank = { active: 0, fundraising: 1, planned: 2, completed: 3 };
+	return rank[a.data.status] - rank[b.data.status] || a.data.title.localeCompare(b.data.title, 'id');
+});
+const regions = projects.map((project) => ({ id: project.id, location: project.data.location, status: project.data.status, area: fmtArea(project.data.area_hectares), kthCount: project.data.community_partners.length }));
+const usedCategories = projectCategories.filter((category) => projects.some((p) => p.data.category === category));
+const usedStatuses = ['active', 'fundraising', 'planned', 'completed'].filter((status) => projects.some((p) => p.data.status === status));
+const stats = [
+	{ label: 'Program dalam katalog', value: projects.length },
+	{ label: 'Program berjalan', value: projects.filter((p) => p.data.status === 'active').length },
+	{ label: 'Mencari mitra pendanaan', value: projects.filter((p) => p.data.status === 'fundraising').length },
+];
+const locationCount = new Set(projects.map((p) => p.data.location.trim().toLocaleLowerCase('id'))).size;
+const og = await getImage({ src: photos.aspekLembah, width: 1200, height: 630, fit: 'cover', format: 'jpeg' });
+const programUrl = new URL('/program', Astro.site).toString();
+const breadcrumbSchema = { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
+	{ '@type': 'ListItem', position: 1, name: 'Beranda', item: Astro.site?.toString() },
+	{ '@type': 'ListItem', position: 2, name: 'Program', item: programUrl },
+] };
+const itemListSchema = { '@context': 'https://schema.org', '@type': 'ItemList', name: 'Program dan Inisiatif SKALA', numberOfItems: projects.length,
+	itemListElement: projects.map((p, i) => ({ '@type': 'ListItem', position: i + 1, url: `${programUrl}/${p.id}`, name: p.data.title, description: p.data.excerpt })),
+};
+---
+
+<Layout title="Program & Inisiatif — SKALA | CSR, Pemberdayaan & Konservasi" description="Jelajahi program CSR, pemetaan sosial, dan inisiatif konservasi SKALA. Kenali fokus, lokasi, status pelaksanaan, serta ruang kerja sama setiap program." image={new URL(og.src, Astro.site).toString()}>
+	<script type="application/ld+json" slot="head" set:html={JSON.stringify(breadcrumbSchema)} is:inline />
+	<script type="application/ld+json" slot="head" set:html={JSON.stringify(itemListSchema)} is:inline />
+	<PageHero image={photos.aspekLembah} alt="Lembah hijau di pedesaan Indonesia" position="center 45%">
+		<h1 class="hero-title" data-reveal>Program yang Tumbuh Bersama Komunitas</h1>
+		<p class="hero-lead" data-reveal>Dari pemetaan sosial dan pendampingan CSR hingga konservasi lahan. Kenali pekerjaan SKALA, tahap pelaksanaannya, dan peluang kerja sama yang bisa dibahas.</p>
+		<a href="#daftar-program" class="mt-2 inline-flex min-h-11 items-center gap-2 font-semibold text-white underline underline-offset-8">Jelajahi Program <span aria-hidden="true">↓</span></a>
+	</PageHero>
+
+	<section class="container-skala py-12 lg:py-16" aria-label="Ringkasan katalog program">
+		<dl class="grid gap-6 divide-y divide-ink-rule rounded-2xl border border-ink-rule bg-white p-6 sm:grid-cols-3 sm:divide-x sm:divide-y-0 sm:p-8">
+			{stats.map((stat) => <div class="flex flex-col gap-2 pt-5 first:pt-0 sm:px-4 sm:pt-0"><dt class="order-2 text-sm text-cream-dim">{stat.label}</dt><dd class="font-serif text-4xl font-semibold text-olive">{stat.value}</dd></div>)}
+		</dl>
+		<p class="mt-4 text-sm leading-relaxed text-cream-dim">Ringkasan ini dihitung dari katalog program. Status berjalan menunjukkan tahap pelaksanaan, bukan ukuran hasil atau dampak.</p>
+	</section>
+
+	<section id="daftar-program" class="container-skala scroll-mt-28 pb-16 lg:pb-20" aria-labelledby="catalog-title">
+		<div class="flex flex-col items-start justify-between gap-5 lg:flex-row lg:items-end">
+			<div class="max-w-2xl"><EyebrowTag text="Program & Inisiatif" /><h2 id="catalog-title" class="mt-5 font-serif text-3xl font-semibold leading-tight text-olive sm:text-4xl lg:text-5xl">Temukan program yang relevan.</h2><p class="mt-5 text-base leading-relaxed text-cream-dim">Kategori menjelaskan bidang pekerjaan. Status menunjukkan apakah program sedang berjalan, direncanakan, selesai, atau mencari mitra pendanaan.</p></div>
+			<CTAButton href="/kemitraan" variant="outline" size="sm">Diskusikan Kebutuhan</CTAButton>
+		</div>
+		<div data-project-filters hidden class="mt-8 space-y-5 rounded-2xl bg-ink-card p-5 sm:p-6">
+			<div role="group" aria-label="Filter kategori program" data-filter-group="category"><p class="mb-3 text-sm font-semibold text-olive">Kategori</p><div class="flex flex-wrap gap-2"><button type="button" class="filter-pill" data-filter="all" aria-pressed="true">Semua kategori</button>{usedCategories.map((category) => <button type="button" class="filter-pill" data-filter={category} aria-pressed="false">{categoryLabel[category]}</button>)}</div></div>
+			<div role="group" aria-label="Filter status program" data-filter-group="status"><p class="mb-3 text-sm font-semibold text-olive">Status pelaksanaan</p><div class="flex flex-wrap gap-2"><button type="button" class="filter-pill" data-filter="all" aria-pressed="true">Semua status</button>{usedStatuses.map((status) => <button type="button" class="filter-pill" data-filter={status} aria-pressed="false">{statusLabel[status]}</button>)}</div></div>
+		</div>
+		<p class="mt-6 text-sm text-cream-dim" data-filter-count role="status" aria-live="polite">Menampilkan {projects.length} program.</p>
+		<div class="mt-5 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+			{projects.map((project) => {
+				const d = project.data;
+				const photo = photoByProject[project.id];
+				return <a href={`/program/${project.id}`} data-project-card data-category={d.category} data-status={d.status} class="group flex min-w-0 flex-col overflow-hidden rounded-2xl border border-ink-rule bg-white transition-colors hover:border-olive">
+					<div class="relative aspect-[16/10] overflow-hidden bg-ink-raise">{photo && <Image src={photo.image} alt={photo.alt} width={800} height={500} loading="lazy" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-[1.04]" />}</div>
+					<div class="flex flex-1 flex-col p-5 sm:p-6">
+						<p class="text-xs font-semibold uppercase tracking-wide text-olive">{categoryLabel[d.category]}</p>
+						<h3 class="mt-3 text-xl font-semibold leading-snug text-cream group-hover:text-olive">{d.title}</h3>
+						<p class="mt-2 text-sm leading-relaxed text-cream-dim">{d.location}</p>
+						<p class="mt-4 text-base leading-relaxed text-cream-dim">{d.excerpt}</p>
+						<dl class="my-5 space-y-3 text-sm">{d.focus && <div><dt class="text-cream-dim">Fokus</dt><dd class="mt-1 font-medium">{d.focus}</dd></div>}{d.client && <div><dt class="text-cream-dim">Mitra program</dt><dd class="mt-1 font-medium">{d.client}</dd></div>}{d.period && <div><dt class="text-cream-dim">Periode</dt><dd class="mt-1 font-medium">{d.period}</dd></div>}</dl>
+						<div class="mt-auto flex flex-wrap items-center justify-between gap-3 border-t border-ink-rule pt-4"><StatusBadge status={d.status} /><span class="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-olive">Lihat Program <span aria-hidden="true">↗</span></span></div>
+					</div>
+				</a>;
+			})}
+		</div>
+		<div data-filter-empty hidden class="mt-6 rounded-2xl border border-dashed border-ink-rule p-8 text-center"><p class="text-cream-dim">Belum ada program dengan kombinasi kategori dan status ini.</p><button type="button" data-filter-reset class="mt-4 min-h-11 font-semibold text-olive underline underline-offset-4">Tampilkan semua program</button></div>
+	</section>
+
+	<section class="container-skala pb-16 lg:pb-20" aria-labelledby="location-title">
+		<EyebrowTag text="Wilayah Kerja" /><h2 id="location-title" class="mt-5 font-serif text-3xl font-semibold text-olive sm:text-4xl">Kenali lokasi program.</h2>
+		<p class="mt-5 max-w-2xl text-base leading-relaxed text-cream-dim">Katalog mencakup {projects.length} program pada {locationCount} lokasi kabupaten/wilayah yang tercantum. Beberapa program berada di wilayah yang sama. Peta ini memberikan gambaran lokasi, bukan batas kawasan program.</p>
+		<IndonesiaProgramMap regions={regions} />
+		<div class="mt-6 grid gap-4 sm:grid-cols-2">{projects.map((project) => <a href={`/program/${project.id}`} data-region-card={project.id} class="rounded-xl border border-ink-rule bg-white p-5 hover:bg-ink-card"><p class="text-sm font-semibold text-olive">{project.data.location}</p><h3 class="mt-2 text-base font-semibold">{project.data.title}</h3><p class="mt-2 text-sm text-cream-dim">{statusLabel[project.data.status]} ↗</p></a>)}</div>
+	</section>
+</Layout>
+
+<style>
+	.filter-pill { min-height: 44px; border: 1px solid var(--color-ink-rule); border-radius: 999px; padding: 0.6rem 1rem; color: var(--color-cream); background: white; font-size: 0.875rem; font-weight: 600; cursor: pointer; }
+	.filter-pill:hover { border-color: var(--color-olive); }
+	.filter-pill[aria-pressed='true'] { background: var(--color-olive); color: white; border-color: var(--color-olive); }
+	[hidden] { display: none !important; }
+</style>
+
+<script>
+	const filters = document.querySelector<HTMLElement>('[data-project-filters]');
+	const cards = [...document.querySelectorAll<HTMLElement>('[data-project-card]')];
+	const count = document.querySelector<HTMLElement>('[data-filter-count]');
+	const empty = document.querySelector<HTMLElement>('[data-filter-empty]');
+	const selection: Record<string, string> = { category: 'all', status: 'all' };
+	const applyFilters = () => {
+		let visible = 0;
+		cards.forEach((card) => {
+			const match = (selection.category === 'all' || card.dataset.category === selection.category) && (selection.status === 'all' || card.dataset.status === selection.status);
+			card.hidden = !match;
+			if (match) visible++;
+		});
+		if (count) count.textContent = `Menampilkan ${visible} dari ${cards.length} program.`;
+		if (empty) empty.hidden = visible > 0;
+		filters?.querySelectorAll<HTMLButtonElement>('[data-filter]').forEach((button) => {
+			const group = button.closest<HTMLElement>('[data-filter-group]')?.dataset.filterGroup;
+			button.setAttribute('aria-pressed', String(Boolean(group) && selection[group!] === button.dataset.filter));
+		});
+	};
+	if (filters) filters.hidden = false;
+	filters?.addEventListener('click', (event) => {
+		const button = (event.target as HTMLElement).closest<HTMLButtonElement>('[data-filter]');
+		const group = button?.closest<HTMLElement>('[data-filter-group]')?.dataset.filterGroup;
+		if (!button || !group) return;
+		selection[group] = button.dataset.filter ?? 'all';
+		applyFilters();
+	});
+	document.querySelector('[data-filter-reset]')?.addEventListener('click', () => {
+		selection.category = selection.status = 'all';
+		applyFilters();
+		filters?.querySelector<HTMLButtonElement>('[data-filter]')?.focus();
+	});
+</script>

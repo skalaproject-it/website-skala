@@ -1,0 +1,94 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import PageHero from '../../components/PageHero.astro';
+import EyebrowTag from '../../components/EyebrowTag.astro';
+import StatusBadge from '../../components/StatusBadge.astro';
+import { getImage } from 'astro:assets';
+import { getCollection, getEntry, render } from 'astro:content';
+import { categoryLabel, statusLabel, fmtArea, fmtFunding, placeholder } from '../../utils/project';
+import { photoByProject, photos } from '../../utils/photos';
+
+export async function getStaticPaths() {
+	return (await getCollection('projects')).map((project) => ({ params: { slug: project.id } }));
+}
+const { slug } = Astro.params;
+const project = await getEntry('projects', slug!);
+if (!project) throw new Error('Program tidak ditemukan');
+const { Content, headings } = await render(project);
+const d = project.data;
+const partnershipUrl = `/kemitraan?program=${encodeURIComponent(project.id)}#form-kemitraan`;
+const summary = [
+	{ label: 'Lokasi', value: d.location },
+	{ label: 'Kategori', value: categoryLabel[d.category] },
+	{ label: 'Fokus', value: d.focus },
+	{ label: 'Mitra program', value: d.client },
+	{ label: 'Periode', value: d.period },
+	{ label: 'Luas kawasan', value: typeof d.area_hectares === 'number' ? fmtArea(d.area_hectares) : undefined },
+	{ label: 'Kebutuhan pendanaan', value: typeof d.funding_needed === 'number' ? fmtFunding(d.funding_needed) : undefined },
+].filter((row) => row.value && placeholder(row.value) !== 'Belum ditetapkan');
+const landFacts = [
+	{ label: 'Status lahan / perizinan', value: d.land_status },
+	{ label: 'Kondisi lahan', value: d.land_condition },
+].filter((row) => row.value && placeholder(row.value) !== 'Belum ditetapkan');
+const photo = photoByProject[project.id];
+const og = await getImage({ src: photo?.image ?? photos.hutanAerial, width: 1200, height: 630, format: 'jpeg', fit: 'cover' });
+const related = (await getCollection('projects')).filter((entry) => entry.id !== project.id).sort((a, b) => Number(b.data.category === d.category) - Number(a.data.category === d.category)).slice(0, 2);
+---
+
+<Layout title={`${d.title} | SKALA`} description={d.excerpt} image={new URL(og.src, Astro.site).toString()}>
+	<PageHero image={photo?.image ?? photos.hutanAerial} alt={photo?.alt ?? `Lokasi program ${d.location}`} position="center 40%">
+		<nav aria-label="Breadcrumb" class="flex flex-wrap items-center justify-center gap-2 text-sm text-white/90">
+			<a href="/program" class="inline-flex min-h-11 items-center underline underline-offset-4">Semua Program</a><span aria-hidden="true">/</span><span>{categoryLabel[d.category]}</span>
+		</nav>
+		<h1 class="hero-title" data-reveal>{d.title}</h1>
+		<p class="hero-lead" data-reveal>{d.excerpt}</p>
+	</PageHero>
+
+	<section class="container-skala py-12 lg:py-20">
+		<div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-14">
+			<div class="min-w-0">
+				<div class="flex flex-wrap items-center gap-4"><StatusBadge status={d.status} /><p class="text-sm text-cream-dim">{d.location}</p></div>
+				<p class="mt-6 text-lg leading-relaxed text-cream">{d.description}</p>
+				<nav aria-label="Isi halaman program" class="mt-8 rounded-2xl border border-ink-rule bg-white p-5 sm:p-6">
+					<p class="font-semibold text-olive">Dalam halaman ini</p>
+					<ul class="mt-3 grid gap-x-6 sm:grid-cols-2">
+						{headings.filter((heading) => heading.depth === 2).map((heading) => <li><a class="inline-flex min-h-11 items-center text-sm text-cream-dim hover:text-olive hover:underline" href={`#${heading.slug}`}>{heading.text}</a></li>)}
+					</ul>
+				</nav>
+				<div class="program-story article-body mt-10"><Content /></div>
+				{d.impact_target && placeholder(d.impact_target) !== 'Belum ditetapkan' && (
+					<section class="mt-8 rounded-2xl bg-ink-card p-6"><h2 class="text-xl font-semibold text-olive">Target dampak</h2><p class="mt-3 leading-relaxed text-cream">{d.impact_target}</p><p class="mt-3 text-sm text-cream-dim">Target ini adalah sasaran program, bukan hasil pengukuran yang telah tercapai.</p></section>
+				)}
+				{landFacts.length > 0 && <section class="mt-8"><h2 class="text-xl font-semibold text-olive">Informasi kawasan</h2><dl class="mt-4 divide-y divide-ink-rule">{landFacts.map((row) => <div class="py-4"><dt class="text-sm text-cream-dim">{row.label}</dt><dd class="mt-1">{row.value}</dd></div>)}</dl></section>}
+			</div>
+
+			<aside class="min-w-0 space-y-6 lg:sticky lg:top-28 lg:self-start" aria-label="Ringkasan dan kemitraan program">
+				<div class="rounded-2xl border border-ink-rule bg-white p-6">
+					<h2 class="text-xl font-semibold text-olive">Ringkasan program</h2>
+					<dl class="mt-4 divide-y divide-ink-rule">
+						<div class="py-4"><dt class="text-sm text-cream-dim">Status pelaksanaan</dt><dd class="mt-1 font-semibold">{statusLabel[d.status]}</dd></div>
+						{summary.map((row) => <div class="py-4"><dt class="text-sm text-cream-dim">{row.label}</dt><dd class="mt-1 text-base leading-relaxed text-cream">{row.value}</dd></div>)}
+					</dl>
+					{typeof d.progress === 'number' && <div class="mt-4"><label for="program-progress" class="text-sm text-cream-dim">Progres pelaksanaan: {d.progress}%</label><progress id="program-progress" value={d.progress} max="100" class="mt-2 h-3 w-full accent-olive">{d.progress}%</progress></div>}
+					{d.community_partners.length > 0 && <div class="mt-4 border-t border-ink-rule pt-4"><h3 class="text-sm font-semibold text-olive">Komunitas yang terlibat</h3><ul class="mt-3 space-y-2 text-sm leading-relaxed text-cream-dim">{d.community_partners.map((partner) => <li>{partner}</li>)}</ul></div>}
+				</div>
+				<div class="rounded-2xl bg-olive p-6 text-white">
+					<EyebrowTag text="Ruang Kolaborasi" tone="dark" />
+					<h2 class="mt-4 text-2xl font-semibold">{d.status === 'fundraising' ? 'Dukung pengembangan program ini.' : 'Punya kebutuhan program serupa?'}</h2>
+					<p class="mt-4 text-base leading-relaxed text-white/90">Sampaikan kebutuhan Anda. Nama program ini akan disertakan dalam formulir untuk membantu diskusi awal bersama tim SKALA.</p>
+					<a href={partnershipUrl} class="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-olive hover:bg-white/90">Diskusikan Program Ini <span aria-hidden="true">↗</span></a>
+				</div>
+				<a href="/dampak" class="inline-flex min-h-11 items-center gap-2 font-semibold text-olive hover:underline">Lihat informasi monitoring <span aria-hidden="true">↗</span></a>
+			</aside>
+		</div>
+	</section>
+
+	<section class="container-skala pb-16 lg:pb-20" aria-labelledby="related-title">
+		<div class="flex flex-wrap items-center justify-between gap-4 border-t border-ink-rule pt-10"><h2 id="related-title" class="text-2xl font-semibold text-olive">Jelajahi program lainnya</h2><a href="/program" class="inline-flex min-h-11 items-center font-semibold text-olive hover:underline">Semua Program ↗</a></div>
+		<div class="mt-6 grid gap-5 sm:grid-cols-2">{related.map((entry) => <a href={`/program/${entry.id}`} class="rounded-2xl border border-ink-rule bg-white p-6 transition-colors hover:bg-ink-card"><p class="text-sm text-cream-dim">{entry.data.location}</p><h3 class="mt-2 text-lg font-semibold">{entry.data.title}</h3><p class="mt-3 text-sm text-olive">{statusLabel[entry.data.status]} ↗</p></a>)}</div>
+	</section>
+</Layout>
+
+<style>
+	.program-story :global(h2) { scroll-margin-top: 7rem; font-size: clamp(1.5rem, 3vw, 2rem); color: var(--color-olive); }
+</style>

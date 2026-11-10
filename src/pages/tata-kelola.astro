@@ -1,0 +1,173 @@
+---
+import Layout from '../layouts/Layout.astro';
+import PageHero from '../components/PageHero.astro';
+import EyebrowTag from '../components/EyebrowTag.astro';
+import CTAButton from '../components/CTAButton.astro';
+import TeamCard from '../components/TeamCard.astro';
+import { photos } from '../utils/photos';
+import cecepSunandar from '../assets/photos/cecep-sunandar.jpg';
+
+// ============================================================================
+// Data badan hukum berikut belum dipublikasikan di situs dan tersedia atas
+// permintaan resmi (dokumen SK, akta, NPWP, laporan keuangan tahunan).
+// ============================================================================
+const legalRows = [
+	{ label: 'Nama Yayasan', value: 'Yayasan Studi Komunitas Alamiah (SKALA)' },
+	{ label: 'Bentuk Badan Hukum', value: 'Yayasan' },
+	{ label: 'Dasar Hukum', value: 'Undang-Undang Nomor 28 Tahun 2004 tentang Yayasan' },
+	{ label: 'Nomor SK Kemenkumham', value: 'Belum dipublikasikan — tersedia atas permintaan resmi' },
+	{ label: 'Tanggal SK', value: 'Belum dipublikasikan — tersedia atas permintaan resmi' },
+	{ label: 'Akta Notaris', value: 'Belum dipublikasikan — tersedia atas permintaan resmi' },
+	{ label: 'NPWP', value: 'Belum dipublikasikan — tersedia atas permintaan resmi' },
+	{ label: 'Domisili', value: 'Jl. Panawuan No. 5A, Kel. Sukajaya, Kec. Tarogong Kidul, Kab. Garut, Jawa Barat 44152, Indonesia' },
+];
+
+const staff = [
+	{ name: 'Mardiana Sidiq', role: 'Direktur', initials: 'MS' },
+	{ name: 'Cepi Firmansyah', role: 'Manager Program', initials: 'CF' },
+	{ name: 'Cecep Sunandar', role: 'Divisi Community Development', initials: 'CS', image: cecepSunandar },
+	{ name: 'Usep Tedi Gunawan', role: 'Divisi Capacity Building', initials: 'UT' },
+	{ name: 'Yusran Hanif', role: 'Divisi SDM', initials: 'YH' },
+];
+
+const financialPoints = [
+	'Pengelolaan dana program mengikuti prinsip akuntabel — peran, keluaran, dan perubahan didokumentasikan secara transparan.',
+	'Setiap penugasan dikelola melalui ruang lingkup yang jelas dan validasi data sebelum dokumen atau laporan diserahkan kepada mitra.',
+	'Analisis dan pelaporan program ditopang oleh data dan dokumentasi lapangan yang dapat diverifikasi.',
+	'Komitmen keterbukaan atas reviu dan verifikasi oleh mitra pendanaan sesuai kesepakatan kerja sama.',
+];
+
+const workStandards = [
+	{
+		title: 'Partisipatif',
+		desc: 'Kegiatan dirancang dan diputuskan bersama masyarakat sejak perencanaan, termasuk persetujuan atas dasar informasi awal (FPIC).',
+	},
+	{
+		title: 'Berbasis bukti',
+		desc: 'Perencanaan dan evaluasi berlandaskan data lapangan yang dapat diverifikasi — kajian, monitoring, dan ground truthing.',
+	},
+	{
+		title: 'Inklusif',
+		desc: 'Melindungi hak kelompok rentan — anak-anak, perempuan, dan kelompok marginal — serta memastikan akses manfaat yang adil.',
+	},
+	{
+		title: 'Akuntabel',
+		desc: 'Alur dana, keputusan, dan hasil dilaporkan secara berkala serta dapat diaudit oleh mitra eksternal.',
+	},
+	{
+		title: 'Berkelanjutan',
+		desc: 'Pendampingan dirancang melampaui satu siklus tanam untuk menjaga keberlanjutan kawasan dan kemandirian komunitas.',
+	},
+];
+---
+
+<Layout
+	title="Tata Kelola | SKALA"
+	description="Status badan hukum, struktur organisasi, tata kelola keuangan, dan kebijakan safeguard sosial-lingkungan Yayasan SKALA untuk keperluan due diligence."
+>
+	<!-- Header -->
+	<PageHero image={photos.musdesPerencanaan} alt="Musyawarah desa menetapkan rencana kerja pembangunan desa" position="center 40%">
+		<h1 class="hero-title" data-reveal>
+			Tata Kelola yang Transparan dan Akuntabel
+		</h1>
+		<p class="hero-lead" data-reveal>
+			SKALA dibangun di atas pengalaman panjang mendampingi komunitas dan ditopang tata kelola yang transparan.
+			Halaman ini menyajikan ringkasan status badan hukum, struktur organisasi, serta pengelolaan keuangan
+			untuk reviu calon mitra; seluruh dokumen pendukung tersedia atas permintaan.
+		</p>
+	</PageHero>
+
+	<!-- Status Badan Hukum -->
+	<section class="container-skala py-20 lg:py-24" data-reveal-group>
+		<EyebrowTag text="Status Badan Hukum" />
+		<h2 class="mt-6 font-serif text-[30px] font-semibold leading-[1.2] text-olive sm:text-[42px] lg:text-[50px] xl:text-[56px]" data-reveal>
+			Identitas legal Yayasan SKALA
+		</h2>
+
+		<dl class="mt-10 divide-y divide-ink-rule rounded-2xl bg-ink-card px-6" data-reveal>
+			{legalRows.map((row) => (
+				<div class="grid gap-1 px-6 py-4 sm:grid-cols-[260px_1fr] sm:gap-6">
+					<dt class="pt-1 text-[11px] font-semibold uppercase tracking-[0.16em] text-cream/60">{row.label}</dt>
+					<dd class="text-[15px] font-medium leading-[1.5] text-cream">{row.value}</dd>
+				</div>
+			))}
+		</dl>
+		<p class="mt-4 text-xs leading-[1.5] text-cream-dim" data-reveal>
+			Dokumen SK, akta, dan NPWP tersedia untuk verifikasi langsung oleh tim compliance atas permintaan resmi.
+		</p>
+	</section>
+
+	<!-- Struktur Organisasi -->
+	<section class="container-skala py-20 lg:py-24" data-reveal-group>
+		<EyebrowTag text="Struktur Organisasi" />
+		<h2 class="mt-6 font-serif text-[30px] font-semibold leading-[1.2] text-olive sm:text-[42px] lg:text-[50px] xl:text-[56px]" data-reveal>
+			Susunan pengurus harian dan divisi kerja SKALA
+		</h2>
+
+		<div class="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+			{staff.map((person) => <TeamCard {...person} />)}
+		</div>
+	</section>
+
+	<!-- Tata Kelola Keuangan -->
+	<section class="container-skala py-20 lg:py-24" data-reveal-group>
+		<EyebrowTag text="Tata Kelola Keuangan" />
+		<h2 class="mt-6 font-serif text-[30px] font-semibold leading-[1.2] text-olive sm:text-[42px] lg:text-[50px] xl:text-[56px]" data-reveal>
+			Komitmen transparansi dan akuntabilitas keuangan
+		</h2>
+
+		<div class="mt-10 rounded-2xl bg-ink-card p-8 lg:p-10" data-reveal>
+			<p class="text-base leading-[1.5] text-cream/90">
+				SKALA berkomitmen pada pengelolaan keuangan yang transparan, tertib, dan dapat dipertanggungjawabkan.
+				Setiap alokasi pendanaan program dicatat dan dilaporkan secara berkala kepada mitra pendanaan,
+				sesuai kesepakatan kerja sama yang dituangkan dalam perjanjian.
+			</p>
+			<ul class="mt-6 space-y-3">
+				{financialPoints.map((point) => (
+					<li class="flex items-start gap-3 text-[15px] leading-[1.5] text-cream/85">
+						<span class="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-olive-soft" aria-hidden="true"></span>
+						{point}
+					</li>
+				))}
+			</ul>
+
+			<div class="mt-8 flex flex-wrap items-center gap-4 border-t border-ink-rule pt-6">
+				<CTAButton href="/kontak" variant="outline" size="sm">
+					Minta Dokumen Pendukung
+				</CTAButton>
+				<p class="text-xs text-cream-dim">Dokumen pendukung pengelolaan program tersedia atas permintaan tertulis dari calon mitra.</p>
+			</div>
+		</div>
+	</section>
+
+	<!-- Standar Kerja -->
+	<section class="container-skala pb-20 lg:pb-28" data-reveal-group>
+		<EyebrowTag text="Standar Kerja" />
+		<h2 class="mt-6 font-serif text-[30px] font-semibold leading-[1.2] text-olive sm:text-[42px] lg:text-[50px] xl:text-[56px]" data-reveal>
+			Lima standar yang menuntun seluruh kegiatan SKALA di lapangan
+		</h2>
+
+		<ul class="mt-10 grid gap-4 lg:grid-cols-2">
+			{workStandards.map((point) => (
+				<li class="flex items-start gap-4 rounded-2xl bg-ink-card p-6" data-reveal>
+					<svg
+						class="mt-1 h-5 w-5 shrink-0 text-olive-soft"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
+					>
+						<path d="M20 6 9 17l-5-5" />
+					</svg>
+					<div>
+						<p class="font-serif text-lg text-cream">{point.title}</p>
+						<p class="mt-1.5 text-[15px] leading-[1.5] text-cream/70">{point.desc}</p>
+					</div>
+				</li>
+			))}
+		</ul>
+	</section>
+</Layout>

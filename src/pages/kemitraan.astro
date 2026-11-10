@@ -1,0 +1,221 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getImage } from 'astro:assets';
+import { getCollection } from 'astro:content';
+import PageHero from '../components/PageHero.astro';
+import EyebrowTag from '../components/EyebrowTag.astro';
+import CTAButton from '../components/CTAButton.astro';
+import FAQAccordion from '../components/FAQAccordion.astro';
+import { photos } from '../utils/photos';
+import { partnershipOptions, partnershipLimits } from '../data/partnership';
+
+const steps = [
+	{ title: 'Sampaikan kebutuhan', description: 'Ceritakan tujuan, lokasi, dan bidang kerja sama melalui formulir atau email.' },
+	{ title: 'Diskusi awal', description: 'Bahas konteks lapangan, sasaran program, dan kemungkinan peran SKALA bersama tim kami.' },
+	{ title: 'Susun ruang lingkup', description: 'Rumuskan kegiatan, pembagian peran, jadwal, serta kebutuhan sumber daya bersama.' },
+	{ title: 'Sepakati kerja sama', description: 'Pelaksanaan dimulai setelah ruang lingkup dan ketentuan kerja sama disepakati para pihak.' },
+];
+const faqItems = [
+	{ question: 'Apakah harus sudah memiliki proposal lengkap?', answer: 'Untuk memulai percakapan, cukup sampaikan gambaran kebutuhan dan tujuan Anda. Lokasi, jadwal, serta ruang lingkup dapat dibahas lebih lanjut dalam diskusi awal.' },
+	{ question: 'Bagaimana jika bidang atau lokasi program belum ditentukan?', answer: 'Pilih “Perlu diskusi” pada bidang kerja sama dan jelaskan gagasan awal Anda. Kolom lokasi boleh dikosongkan jika belum ditentukan.' },
+	{ question: 'Apakah mengisi formulir berarti langsung menyepakati kerja sama?', answer: 'Formulir ini digunakan untuk memulai diskusi. Ruang lingkup, anggaran, jadwal, dan komitmen pelaksanaan dibahas serta disepakati secara terpisah.' },
+	{ question: 'Bagaimana saya akan dihubungi?', answer: 'Gunakan email yang aktif agar tim SKALA dapat menindaklanjuti pesan Anda. Nomor telepon atau WhatsApp dapat ditambahkan sebagai kontak alternatif.' },
+];
+const ogImage = await getImage({ src: photos.sukarelawan, width: 1200, height: 630, fit: 'cover', format: 'jpeg' });
+const inputClass = 'min-h-[50px] w-full scroll-mt-28 rounded-xl border border-ink-rule bg-white px-4 py-3 text-base text-cream placeholder:text-cream-dim focus:border-olive focus:outline-none focus:ring-2 focus:ring-olive/30';
+const programReferences = (await getCollection('projects')).map((project) => ({
+	id: project.id,
+	label: `${project.data.title} — ${project.data.location}`,
+	type: project.data.category !== 'kemitraan' ? 'Konservasi Lingkungan' : project.data.focus === 'Pemetaan sosial' ? 'Riset dan Pemetaan Sosial' : 'CSR/TJSL',
+}));
+---
+
+<Layout
+	title="Kemitraan — SKALA | Diskusikan Program CSR, Pemberdayaan & Lingkungan"
+	description="Mulai kerja sama dengan Yayasan SKALA untuk program CSR/TJSL, pemberdayaan masyarakat, konservasi, dan pemetaan sosial. Sampaikan kebutuhan program Anda."
+	image={new URL(ogImage.src, Astro.site).toString()}
+>
+	<PageHero image={photos.sukarelawan} alt="Relawan dan petugas kebersihan bekerja sama membersihkan Sungai Cikapundung, Kota Bandung" position="center 35%" minHeight="min-h-[80svh]">
+		<h1 class="hero-title" data-reveal>Mari Rancang Program Bersama.</h1>
+		<p class="hero-lead" data-reveal>Hubungkan tujuan perusahaan atau lembaga Anda dengan kebutuhan masyarakat. SKALA mendampingi perencanaan dan pelaksanaan program berbasis komunitas.</p>
+		<div class="mt-4 flex flex-wrap items-center gap-6" data-reveal>
+			<CTAButton href="#form-kemitraan" variant="hero">Diskusikan Program</CTAButton>
+			<a href="#bidang-kemitraan" class="inline-flex min-h-11 items-center font-semibold text-white underline underline-offset-8">Lihat Pilihan Kerja Sama</a>
+		</div>
+	</PageHero>
+
+	<section id="bidang-kemitraan" class="container-skala scroll-mt-28 py-16 lg:py-20" aria-labelledby="bidang-title">
+		<div class="max-w-2xl" data-reveal-group>
+			<EyebrowTag text="Ruang Kolaborasi" />
+			<h2 id="bidang-title" class="mt-5 font-serif text-3xl font-semibold leading-tight text-olive sm:text-4xl lg:text-5xl" data-reveal>Apa yang ingin Anda kembangkan?</h2>
+			<p class="mt-5 text-base leading-relaxed text-cream-dim" data-reveal>Pilih bidang yang paling dekat dengan kebutuhan Anda. Ruang lingkup dapat menggabungkan beberapa bidang sesuai konteks program.</p>
+		</div>
+		<div class="mt-8 grid gap-5 sm:grid-cols-2" data-reveal-group>
+			{partnershipOptions.map((option, index) => (
+				<article class="flex flex-col rounded-2xl bg-ink-card p-6 sm:p-8" data-reveal>
+					<p class="text-sm font-semibold text-olive" aria-hidden="true">0{index + 1}</p>
+					<h3 class="mt-3 text-xl font-semibold text-cream">{option.title}</h3>
+					<p class="mb-5 mt-3 text-base leading-relaxed text-cream-dim">{option.description}</p>
+					<a href="#form-kemitraan" data-partner-choice={option.value} aria-label={`Diskusikan ${option.title}`} class="mt-auto inline-flex min-h-11 items-center gap-2 self-start font-semibold text-olive hover:underline">Diskusikan Bidang Ini <span aria-hidden="true">↗</span></a>
+				</article>
+			))}
+		</div>
+	</section>
+
+	<section class="container-skala pb-16 lg:pb-20" aria-labelledby="alur-title">
+		<EyebrowTag text="Langkah Awal" />
+		<h2 id="alur-title" class="mt-5 font-serif text-3xl font-semibold leading-tight text-olive sm:text-4xl lg:text-5xl">Dari percakapan ke kerja sama.</h2>
+		<p class="mt-5 max-w-2xl text-base leading-relaxed text-cream-dim">Berikut gambaran tahapan yang dapat dibahas bersama. Detail proses dan jadwal disesuaikan dengan kebutuhan masing-masing program.</p>
+		<ol class="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4" data-reveal-group>
+			{steps.map((step, index) => (
+				<li class="border-t border-ink-rule pt-6" data-reveal>
+					<span class="grid h-10 w-10 place-items-center rounded-full bg-olive font-semibold text-white" aria-hidden="true">{index + 1}</span>
+					<h3 class="mt-4 text-lg font-semibold text-cream">{step.title}</h3>
+					<p class="mt-3 text-base leading-relaxed text-cream-dim">{step.description}</p>
+				</li>
+			))}
+		</ol>
+	</section>
+
+	<section id="form-kemitraan" class="container-skala scroll-mt-28 pb-16 lg:pb-20" aria-labelledby="form-title">
+		<div class="grid gap-8 rounded-2xl bg-ink-card p-4 sm:p-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-12 lg:p-12">
+			<div>
+				<EyebrowTag text="Mulai Percakapan" />
+				<h2 id="form-title" class="mt-5 font-serif text-3xl font-semibold leading-tight text-olive sm:text-4xl">Ceritakan kebutuhan program Anda.</h2>
+				<p class="mt-5 text-base leading-relaxed text-cream-dim">Gambaran singkat sudah cukup untuk memulai. Sertakan tujuan, calon penerima manfaat, dan perkiraan waktu jika sudah tersedia.</p>
+				<p class="mt-6 text-base leading-relaxed text-cream-dim">Anda juga dapat mengirim email langsung ke <a href="mailto:office@skalapro.or.id" class="break-all font-semibold text-olive underline underline-offset-4">office@skalapro.or.id</a>.</p>
+				<a href="/program" class="mt-6 inline-flex min-h-11 items-center gap-2 font-semibold text-olive hover:underline">Lihat contoh program kami <span aria-hidden="true">↗</span></a>
+			</div>
+			<div class="min-w-0 rounded-2xl bg-white p-4 sm:p-8">
+				<noscript><p class="mb-6 text-base text-cream">Aktifkan JavaScript untuk menggunakan formulir, atau kirim kebutuhan Anda melalui <a href="mailto:office@skalapro.or.id" class="text-olive underline">email SKALA</a>.</p></noscript>
+				<form data-partner-form data-program-references={JSON.stringify(programReferences)} class="grid gap-5" aria-describedby="form-help" hidden>
+					<p id="form-help" class="text-sm leading-relaxed text-cream-dim">Kolom bertanda * wajib diisi. Email digunakan untuk menindaklanjuti diskusi Anda.</p>
+					<p data-program-context hidden class="rounded-xl bg-ink-card p-4 text-sm leading-relaxed text-olive">Bidang kerja sama dan referensi program sudah diisi dari halaman yang Anda pilih. Anda dapat menyesuaikannya dengan kebutuhan.</p>
+					<div class="grid gap-5 sm:grid-cols-2">
+						<div><label for="form-name" class="mb-2 block font-semibold">Nama *</label><input id="form-name" name="name" type="text" required maxlength={partnershipLimits.name} autocomplete="name" class={inputClass} /></div>
+						<div><label for="form-org" class="mb-2 block font-semibold">Instansi / organisasi <span class="text-sm font-normal">(opsional)</span></label><input id="form-org" name="organization" type="text" maxlength={partnershipLimits.organization} autocomplete="organization" class={inputClass} /></div>
+					</div>
+					<div class="grid gap-5 sm:grid-cols-2">
+						<div><label for="form-email" class="mb-2 block font-semibold">Email *</label><input id="form-email" name="email" type="email" required maxlength={partnershipLimits.email} autocomplete="email" placeholder="nama@instansi.id" class={inputClass} /></div>
+						<div><label for="form-phone" class="mb-2 block font-semibold">Telepon / WhatsApp <span class="text-sm font-normal">(opsional)</span></label><input id="form-phone" name="phone" type="tel" maxlength={partnershipLimits.phone} autocomplete="tel" placeholder="Contoh: +62 812 3456 7890" class={inputClass} /></div>
+					</div>
+					<div>
+						<label for="form-type" class="mb-2 block font-semibold">Bidang kerja sama *</label>
+						<select id="form-type" name="partner_type" required class={inputClass}>
+							<option value="" disabled selected>Pilih bidang kerja sama</option>
+							{partnershipOptions.map((option) => <option value={option.value}>{option.title}</option>)}
+							<option value="Perlu Diskusi">Perlu diskusi / gabungan beberapa bidang</option>
+						</select>
+					</div>
+					<div><label for="form-location" class="mb-2 block font-semibold">Lokasi / program <span class="text-sm font-normal">(opsional)</span></label><input id="form-location" name="project_interest" type="text" maxlength={partnershipLimits.project_interest} placeholder="Contoh: pemberdayaan UMKM di Garut" aria-describedby="location-help" class={inputClass} /><p id="location-help" class="mt-2 text-sm text-cream-dim">Boleh dikosongkan jika lokasi belum ditentukan.</p></div>
+					<div><label for="form-message" class="mb-2 block font-semibold">Gambaran kebutuhan *</label><textarea id="form-message" name="message" required maxlength={partnershipLimits.message} rows={5} placeholder="Apa tujuan program Anda, siapa yang ingin didampingi, dan dukungan apa yang dibutuhkan?" class:list={[inputClass, 'min-h-36 resize-y leading-relaxed']}></textarea></div>
+					<button type="submit" data-partner-submit class="min-h-[50px] rounded-full bg-olive px-5 py-3 font-semibold text-white hover:bg-olive/90 disabled:cursor-wait disabled:opacity-60">Kirim Kebutuhan Program</button>
+					<p data-partner-status role="status" aria-live="polite" aria-atomic="true" tabindex="-1" class="text-base leading-relaxed text-red-700"></p>
+				</form>
+				<div data-partner-success hidden tabindex="-1" role="status" class="py-10">
+					<h3 class="text-2xl font-semibold text-olive">Pesan Anda berhasil terkirim.</h3>
+					<p class="mt-4 text-base leading-relaxed text-cream-dim">Terima kasih telah menghubungi SKALA. Tim kami akan menindaklanjuti kebutuhan Anda melalui kontak yang dicantumkan.</p>
+					<button type="button" data-partner-reset class="mt-6 min-h-11 font-semibold text-olive underline underline-offset-4">Kirim kebutuhan lain</button>
+				</div>
+			</div>
+		</div>
+	</section>
+
+	<section class="container-skala pb-16 lg:pb-20" aria-labelledby="faq-title">
+		<div class="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:gap-12">
+			<div><EyebrowTag text="Tanya Jawab" /><h2 id="faq-title" class="mt-5 font-serif text-3xl font-semibold leading-tight text-olive sm:text-4xl">Sebelum memulai diskusi.</h2></div>
+			<FAQAccordion items={faqItems} single />
+		</div>
+	</section>
+</Layout>
+
+<script>
+	import { validatePartnership } from '../data/partnership';
+	const form = document.querySelector<HTMLFormElement>('[data-partner-form]');
+	const statusEl = document.querySelector<HTMLElement>('[data-partner-status]');
+	const successEl = document.querySelector<HTMLElement>('[data-partner-success]');
+	const submitBtn = document.querySelector<HTMLButtonElement>('[data-partner-submit]');
+	const typeSelect = document.querySelector<HTMLSelectElement>('#form-type');
+	let submitting = false;
+	if (form) form.hidden = false;
+	// Hanya gunakan ID yang ada di katalog; query URL tidak menjadi isi formulir langsung.
+	const requestedProgram = new URLSearchParams(window.location.search).get('program');
+	if (requestedProgram && form) {
+		const references = JSON.parse(form.dataset.programReferences ?? '[]') as { id: string; label: string; type: string }[];
+		const reference = references.find((entry) => entry.id === requestedProgram);
+		const locationInput = form.querySelector<HTMLInputElement>('#form-location');
+		if (reference && locationInput && typeSelect) {
+			locationInput.value = reference.label;
+			typeSelect.value = reference.type;
+			const context = form.querySelector<HTMLElement>('[data-program-context]');
+			if (context) context.hidden = false;
+		}
+	}
+
+	const showError = (message: string, field?: string) => {
+		if (!statusEl || !form) return;
+		statusEl.textContent = message;
+		const input = field ? form.elements.namedItem(field) : null;
+		if (input instanceof HTMLInputElement || input instanceof HTMLSelectElement || input instanceof HTMLTextAreaElement) {
+			input.setAttribute('aria-invalid', 'true');
+			input.focus();
+		} else statusEl.focus();
+	};
+	form?.addEventListener('input', (event) => {
+		if (event.target instanceof HTMLElement) event.target.removeAttribute('aria-invalid');
+		if (statusEl) statusEl.textContent = '';
+	});
+	document.querySelectorAll<HTMLAnchorElement>('[data-partner-choice]').forEach((link) => {
+		link.addEventListener('click', () => {
+			if (!typeSelect || submitting) return;
+			if (successEl) successEl.hidden = true;
+			if (form) form.hidden = false;
+			typeSelect.value = link.dataset.partnerChoice ?? '';
+			typeSelect.removeAttribute('aria-invalid');
+			typeSelect.focus({ preventScroll: true });
+		});
+	});
+	form?.addEventListener('submit', async (event) => {
+		event.preventDefault();
+		if (!form || !submitBtn || submitting) return;
+		if (!form.reportValidity()) return;
+		const result = validatePartnership(Object.fromEntries(new FormData(form)));
+		if (result.error) { showError(result.error, result.field); return; }
+		submitting = true;
+		submitBtn.disabled = true;
+		submitBtn.textContent = 'Mengirim…';
+		form.setAttribute('aria-busy', 'true');
+		if (statusEl) statusEl.textContent = 'Sedang mengirim kebutuhan program Anda…';
+		try {
+			const res = await fetch('/api/kemitraan', {
+				method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(result.data),
+			});
+			const data = await res.json().catch(() => null);
+			if (res.ok && data?.ok === true) {
+				form.reset();
+				form.hidden = true;
+				if (successEl) { successEl.hidden = false; successEl.focus(); }
+			} else {
+				showError(typeof data?.message === 'string' ? data.message : 'Pengiriman belum dapat dikonfirmasi. Hubungi office@skalapro.or.id sebelum mengirim ulang.', typeof data?.field === 'string' ? data.field : undefined);
+			}
+		} catch {
+			showError('Koneksi terputus sehingga pengiriman belum dapat dikonfirmasi. Isian Anda tetap tersimpan di formulir. Hubungi office@skalapro.or.id jika ragu sebelum mengirim ulang.');
+		} finally {
+			submitting = false;
+			submitBtn.disabled = false;
+			submitBtn.textContent = 'Kirim Kebutuhan Program';
+			form.removeAttribute('aria-busy');
+		}
+	});
+	document.querySelector<HTMLButtonElement>('[data-partner-reset]')?.addEventListener('click', () => {
+		if (!form) return;
+		form.reset();
+		form.hidden = false;
+		const context = form.querySelector<HTMLElement>('[data-program-context]');
+		if (context) context.hidden = true;
+		if (successEl) successEl.hidden = true;
+		if (statusEl) statusEl.textContent = '';
+		form.querySelectorAll('[aria-invalid]').forEach((input) => input.removeAttribute('aria-invalid'));
+		form.querySelector<HTMLInputElement>('#form-name')?.focus();
+	});
+</script>

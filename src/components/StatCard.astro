@@ -1,0 +1,50 @@
+---
+interface Props {
+	value?: number;
+	text?: string;
+	label: string;
+	prefix?: string;
+	suffix?: string;
+	decimals?: number;
+	variant?: 'olive' | 'dark';
+	locale?: string;
+	className?: string;
+}
+
+const { value, text, label, prefix, suffix, decimals = 0, variant = 'olive', locale = 'id-ID', className = '' } = Astro.props;
+
+const cardStyles = {
+	olive: 'bg-olive text-ink',
+	dark: 'border border-ref-line bg-ink-card text-cream',
+};
+const labelStyles = {
+	olive: 'text-ink',
+	dark: 'text-cream-dim',
+};
+---
+
+<div
+	class:list={[
+		'flex h-full min-h-44 flex-col justify-between gap-10 rounded-2xl p-6 lg:p-8',
+		cardStyles[variant],
+		className,
+	]}
+	data-reveal
+>
+	{text !== undefined ? (
+		<span class="text-3xl font-semibold tracking-tight lg:text-4xl">{text}</span>
+	) : (
+		<span
+			class="text-5xl font-semibold tracking-tight tabular-nums lg:text-6xl"
+			data-count-up
+			data-count-to={value}
+			data-count-decimals={decimals}
+			data-count-prefix={prefix}
+			data-count-suffix={suffix}
+			data-count-locale={locale}
+		>
+			{prefix}{value?.toLocaleString(locale, { minimumFractionDigits: decimals, maximumFractionDigits: decimals })}{suffix}
+		</span>
+	)}
+	<span class:list={['text-[10px] font-semibold uppercase tracking-[0.18em]', labelStyles[variant]]}>{label}</span>
+</div>

@@ -1,0 +1,227 @@
+---
+import { navigation } from '../data/navigation';
+import DropdownNav from './DropdownNav.astro';
+import BrandMark from './BrandMark.astro';
+
+/**
+ * tone = 'dark'  -> navbar untuk halaman berlatar gelap / hero foto.
+ *                    Ini default dan perilakunya persis seperti sebelumnya.
+ * tone = 'light' -> navbar untuk halaman berlatar terang (kertas): logo dan
+ *                    teks jadi gelap, pill jadi kaca terang.
+ *
+ * Kenapa varian ini perlu: navbar global mengasumsikan selalu ada background
+ * gelap di belakangnya. Halaman artikel berlatar kertas, jadi asumsi itu
+ * salah dan teks putihnya tidak terbaca. Daripada memaksa halaman artikel
+ * digelapkan hanya demi navbar, lebih benar memberi halaman itu navbar
+ * dengan tone-nya sendiri.
+ */
+interface Props {
+	tone?: 'dark' | 'light';
+}
+
+const { tone = 'dark' } = Astro.props;
+---
+
+<header id="site-header" data-nav-tone={tone} class="fixed inset-x-0 top-0 z-50">
+	<div class="container-skala">
+		<div class="nav-pill">
+			<a href="/" class:list={['nav-brand flex shrink-0 items-center', tone === 'light' ? 'text-cream' : 'text-white']} aria-label="SKALA — Beranda">
+				<BrandMark />
+			</a>
+
+			<DropdownNav items={navigation} mode="desktop" />
+
+			<div class="flex shrink-0 items-center gap-2">
+				<a href="/kemitraan" class="nav-cta hidden xl:inline-flex">
+					Bermitra
+				</a>
+				<button
+					type="button"
+					class="hamburger relative grid h-11 w-11 place-items-center rounded-full bg-white text-olive-deep xl:hidden"
+					data-menu-toggle
+					aria-expanded="false"
+					aria-controls="mobile-nav"
+					aria-label="Buka menu"
+				>
+					<span class="hamburger-lines" aria-hidden="true"></span>
+				</button>
+			</div>
+		</div>
+
+		<div class="mobile-nav-shell xl:hidden" data-mobile-nav id="mobile-nav" inert>
+			<div>
+				<DropdownNav items={navigation} mode="mobile" />
+			</div>
+		</div>
+	</div>
+</header>
+
+<style>
+	.hamburger-lines,
+	.hamburger-lines::before,
+	.hamburger-lines::after {
+		content: "";
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		width: 18px;
+		height: 2px;
+		border-radius: 9999px;
+		background: currentColor;
+		transform: translate(-50%, -50%);
+		transition:
+			transform 0.3s ease,
+			opacity 0.3s ease;
+	}
+
+	.hamburger-lines::before {
+		transform: translate(-50%, -50%) translateY(-6px);
+	}
+
+	.hamburger-lines::after {
+		transform: translate(-50%, -50%) translateY(6px);
+	}
+
+	.hamburger.is-open .hamburger-lines {
+		background: transparent;
+	}
+
+	.hamburger.is-open .hamburger-lines::before {
+		transform: translate(-50%, -50%) rotate(45deg);
+	}
+
+	.hamburger.is-open .hamburger-lines::after {
+		transform: translate(-50%, -50%) rotate(-45deg);
+	}
+</style>
+
+<script>
+	const closeDropdowns = (): void => {
+		document.querySelectorAll<HTMLElement>('[data-dropdown].is-open').forEach((el) => {
+			el.classList.remove('is-open');
+			el.querySelector<HTMLElement>('[data-dd-toggle]')?.setAttribute('aria-expanded', 'false');
+		});
+	};
+
+	const closeMobile = (): void => {
+		const nav = document.querySelector<HTMLElement>('[data-mobile-nav]');
+		const btn = document.querySelector<HTMLElement>('[data-menu-toggle]');
+		if (nav?.classList.contains('is-open')) nav.classList.remove('is-open');
+		btn?.classList.remove('is-open');
+		btn?.setAttribute('aria-expanded', 'false');
+		btn?.setAttribute('aria-label', 'Buka menu');
+		if (nav) {
+			nav.inert = true;
+			nav.querySelectorAll('details[open]').forEach((details) => details.removeAttribute('open'));
+		}
+	};
+
+	const getHeroEnd = (): number => {
+		const firstSection = document.querySelector<HTMLElement>('body section');
+		if (!firstSection) return 300;
+		return firstSection.offsetTop + firstSection.offsetHeight - 60;
+	};
+
+	let heroEnd = getHeroEnd();
+	const recomputeHero = (): void => {
+		heroEnd = getHeroEnd();
+		updatePill();
+	};
+
+	const lerp = (a: number, b: number, t: number): number => a + (b - a) * t;
+
+	// Pill mengikuti tone header. Di mode gelap, warnanya melompat dari putih
+	// transparan (di atas hero foto) ke tinta pekat (setelah hero lewat).
+	// Di mode terang, warnanya tetap putih — hanya alphanya yang naik, karena
+	// halaman sudah berlatar kertas dan tidak ada hero gelap di atasnya.
+	const isLightTone = (): boolean =>
+		document.querySelector<HTMLElement>('#site-header')?.dataset.navTone === 'light';
+
+	const updatePill = (): void => {
+		const pill = document.querySelector<HTMLElement>('.nav-pill');
+		if (!pill) return;
+		const t = heroEnd > 0 ? Math.min(Math.max(window.scrollY / heroEnd, 0), 1) : 0;
+		const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+		if (isLightTone()) {
+			const a = lerp(0.72, 0.94, eased);
+			const blur = lerp(10, 18, eased);
+			pill.style.setProperty('--nav-pill-bg', `rgb(255 255 255 / ${a.toFixed(3)})`);
+			pill.style.setProperty('--nav-pill-blur', `${blur.toFixed(1)}px`);
+			return;
+		}
+
+		const r = Math.round(lerp(255, 20, eased));
+		const g = Math.round(lerp(255, 45, eased));
+		const b = Math.round(lerp(255, 36, eased));
+		const a = lerp(0.12, 0.72, eased);
+		const blur = lerp(6, 14, eased);
+		pill.style.setProperty('--nav-pill-bg', `rgb(${r} ${g} ${b} / ${a.toFixed(3)})`);
+		pill.style.setProperty('--nav-pill-blur', `${blur.toFixed(1)}px`);
+	};
+
+	const hydrate = (): void => {
+		closeDropdowns();
+		closeMobile();
+		recomputeHero();
+	};
+
+	document.addEventListener('click', (event) => {
+		const target = event.target as HTMLElement;
+
+		const ddToggle = target.closest<HTMLElement>('[data-dd-toggle]');
+		if (ddToggle) {
+			const wrap = ddToggle.closest<HTMLElement>('[data-dropdown]');
+			if (!wrap) return;
+			const open = wrap.classList.toggle('is-open');
+			ddToggle.setAttribute('aria-expanded', String(open));
+			return;
+		}
+
+		const menuToggle = target.closest<HTMLElement>('[data-menu-toggle]');
+		if (menuToggle) {
+			const nav = document.querySelector<HTMLElement>('[data-mobile-nav]');
+			const open = nav?.classList.toggle('is-open') ?? false;
+			menuToggle.classList.toggle('is-open', open);
+			menuToggle.setAttribute('aria-expanded', String(open));
+			menuToggle.setAttribute('aria-label', open ? 'Tutup menu' : 'Buka menu');
+			if (nav) nav.inert = !open;
+			if (!open) closeMobile();
+			return;
+		}
+
+		if (!target.closest('[data-dropdown]')) closeDropdowns();
+
+		if (target.closest('[data-mobile-nav] a')) closeMobile();
+		else if (!target.closest('[data-menu-toggle]') && !target.closest('[data-mobile-nav]')) closeMobile();
+	});
+
+	document.addEventListener('keydown', (event) => {
+		if (event.key === 'Escape') {
+			const nav = document.querySelector<HTMLElement>('[data-mobile-nav]');
+			if (nav?.classList.contains('is-open')) {
+				document.querySelector<HTMLButtonElement>('[data-menu-toggle]')?.focus();
+			} else {
+				(document.activeElement?.closest('[data-dropdown]')?.querySelector('[data-dd-toggle]') as HTMLElement | null)?.focus();
+			}
+			closeDropdowns();
+			closeMobile();
+		}
+	});
+
+	window.addEventListener('scroll', updatePill, { passive: true });
+	window.addEventListener('resize', recomputeHero, { passive: true });
+	window.matchMedia('(min-width: 1280px)').addEventListener('change', () => {
+		closeMobile();
+		closeDropdowns();
+	});
+	document.addEventListener('focusin', (event) => {
+		if (event.target instanceof HTMLElement && !event.target.closest('#site-header')) {
+			closeMobile();
+			closeDropdowns();
+		}
+	});
+	window.addEventListener('astro:page-load', hydrate);
+
+	if (document.readyState !== 'loading') hydrate();
+</script>

@@ -1,0 +1,112 @@
+---
+import { getCollection } from 'astro:content';
+
+import Layout from '../../../layouts/Layout.astro';
+import PageHero from '../../../components/PageHero.astro';
+import EyebrowTag from '../../../components/EyebrowTag.astro';
+import NewsCard from '../../../components/NewsCard.astro';
+
+import {
+	categoriesOf,
+	categoryHref,
+	categoryLabels,
+	countByCategory,
+	groupByMonth,
+	sortNews,
+	yearsOf,
+	yearHref,
+} from '../../../utils/news';
+import { photos } from '../../../utils/photos';
+
+export async function getStaticPaths() {
+	const all = await getCollection('news');
+	return yearsOf(all).map((year) => ({ params: { tahun: String(year) } }));
+}
+
+const tahun = Number(Astro.params.tahun);
+const all = sortNews(await getCollection('news'));
+const items = all.filter((item) => item.data.date.getFullYear() === tahun);
+const counts = countByCategory(all);
+const groups = groupByMonth(items);
+const activeCategories = categoriesOf(items);
+---
+
+<Layout
+	title={`Arsip Berita ${tahun} | SKALA`}
+	description={`Kumpulan berita dan kegiatan SKALA yang dipublikasikan pada tahun ${tahun}.`}
+>
+	<PageHero
+		image={photos.hutanAerial}
+		alt="Pemandangan aerial kanopi hutan"
+		position="center 40%"
+	>
+		<nav class="hero-eyebrow" aria-label="Breadcrumb" data-reveal>
+			<a href="/berita" class="transition-colors hover:text-white">Berita</a>
+			<span aria-hidden="true">/</span>
+			<span class="text-white/85">{tahun}</span>
+		</nav>
+		<h1 class="hero-title" data-reveal>
+			Arsip {tahun}
+		</h1>
+		<p class="hero-lead" data-reveal>
+			{items.length} berita dipublikasikan pada tahun {tahun}.
+		</p>
+	</PageHero>
+
+	<section class="bg-news-paper">
+		<div class="container-skala py-14 lg:py-20">
+			{groups.map((group) => (
+				<div class="mb-12 last:mb-0" data-reveal>
+					<div class="mb-6 flex items-baseline gap-4">
+						<h2 class="text-xl font-bold text-news-ink">{group.label}</h2>
+						<span class="h-px flex-1 bg-news-rule"></span>
+						<span class="text-xs font-medium tabular-nums text-news-muted">
+							{group.items.length} berita
+						</span>
+					</div>
+					<div class="grid gap-6 sm:grid-cols-2">
+						{group.items.map((item) => (
+							<NewsCard item={item} layout="row" />
+						))}
+					</div>
+				</div>
+			))}
+		</div>
+	</section>
+
+	<!-- Navigasi arsip: penuh di bawah -->
+	<section class="news-rule bg-news-surface">
+		<div class="container-skala py-14 lg:py-20">
+			<div class="grid gap-12 lg:grid-cols-2 lg:gap-16">
+				<div data-reveal>
+					<EyebrowTag as="h2" tone="news" text="Tahun Lain" />
+					<div class="mt-6 flex flex-wrap gap-2">
+						{yearsOf(all)
+							.filter((year) => year !== tahun)
+							.map((year) => (
+								<a href={yearHref(year)} class="news-chip">{year}</a>
+							))}
+					</div>
+				</div>
+
+				<div data-reveal>
+					<EyebrowTag as="h2" tone="news" text={`Topik ${tahun}`} />
+					<ul class="mt-6 space-y-3">
+						{activeCategories.map((category) => (
+							<li>
+								<a
+									href={categoryHref(category)}
+									class="flex items-center justify-between gap-4 border-b border-news-rule py-2.5 text-sm font-medium text-news-body transition-colors hover:text-news-accent"
+								>
+									<span>{categoryLabels[category]}</span>
+									<span class="tabular-nums text-news-muted">{counts[category] ?? 0}</span>
+								</a>
+							</li>
+						))}
+					</ul>
+				</div>
+			</div>
+		</div>
+	</section>
+</Layout>
+</Layout>

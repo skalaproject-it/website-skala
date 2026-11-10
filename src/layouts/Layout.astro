@@ -1,0 +1,17 @@
+---
+import BaseLayout from './BaseLayout.astro';
+
+interface Props {
+	title?: string;
+	description?: string;
+	image?: string;
+	pageType?: 'website' | 'article';
+}
+
+const { title = 'SKALA', description = '', image, pageType = 'website', navTone = 'dark' } = Astro.props;
+---
+
+<BaseLayout title={title} description={description} image={image} pageType={pageType} navTone={navTone}>
+	<slot name="head" slot="head" />
+	<slot />
+</BaseLayout>

@@ -1,0 +1,42 @@
+---
+interface Props {
+	/** Isi eyebrow. */
+	text: string;
+	/**
+	 * Elemen yang dirender. Default 'div'. Pakai 'h2' untuk judul seksi
+	 * supaya tetap masuk outline dokumen — menyamakan gaya tidak boleh
+	 * menghapus heading dari dokumen.
+	 */
+	as?: 'div' | 'h2' | 'p' | 'span';
+	/**
+	 * Permukaan tempat eyebrow berada. Tipografinya identik untuk semua
+	 * tone; hanya warnanya yang berubah, karena satu nilai tidak bisa
+	 * sekaligus terbaca di atas kertas terang dan di atas foto gelap.
+	 */
+	tone?: 'light' | 'dark' | 'news' | 'news-muted';
+	/** Wajib diisi kalau elemen ini jadi target aria-labelledby. */
+	id?: string;
+	className?: string;
+}
+
+const { text, as: Tag = 'div', tone = 'light', id, className = '' } = Astro.props;
+
+const TONE_TEXT = {
+	light: 'text-olive',
+	dark: 'text-white',
+	news: 'text-news-accent',
+	'news-muted': 'text-news-muted',
+} as const;
+
+const TONE_DOT = {
+	light: 'bg-olive',
+	dark: 'bg-white',
+	news: 'bg-news-accent',
+	'news-muted': 'bg-news-muted',
+} as const;
+---
+
+<Tag class:list={['eyebrow', className]} id={id} data-reveal>
+	<span class:list={['eyebrow__dot', TONE_DOT[tone]]} aria-hidden="true"></span>
+	<span class={TONE_TEXT[tone]}>{text}</span>
+</Tag>

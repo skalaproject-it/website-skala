@@ -1,0 +1,108 @@
+---
+interface Partner {
+	name: string;
+	src?: string;
+	href?: string;
+	/** Optional per-partner sizing so mixed-ratio artwork stays optically balanced. */
+	logoClass?: string;
+}
+
+interface Props {
+	partners: Partner[];
+	marquee?: boolean;
+	className?: string;
+	wordmarkClass?: string;
+	logoClass?: string;
+	/**
+	 * `full` keeps artwork in colour (light surfaces), `muted` greyscale until
+	 * hover. The reference marquee runs in full colour.
+	 */
+	logoTone?: 'full' | 'muted';
+	/** How many times the logo list repeats per half of the loop. */
+	loopCopies?: number;
+}
+
+const {
+	partners,
+	marquee = false,
+	className = '',
+	wordmarkClass = 'font-serif text-lg',
+	logoClass = '',
+	logoTone = 'muted',
+	loopCopies = 3,
+} = Astro.props;
+
+/* `full` keeps artwork in colour (light surfaces), `muted` greyscale until hover. */
+const logoToneClass =
+	logoTone === 'full' ? '' : 'opacity-40 grayscale hover:opacity-100 hover:grayscale-0';
+const marqueeLogoClass = (partner: Partner): string =>
+	`${partner.logoClass || logoClass || 'h-9 max-w-40 object-contain'} transition-all duration-300 ${logoToneClass}`.trim();
+/* Both halves are pre-rendered; `initMarquees()` measures one repetition and
+   picks how many repetitions form the shift, so the track always outruns its
+   container and the loop closes without a visible seam. */
+const setIndexes = Array.from({ length: loopCopies * 2 }, (_, i) => i);
+---
+
+{marquee ? (
+	<div class="a-marquee" role="presentation" data-marquee>
+		<div class="a-marquee-track">
+			{setIndexes.map((setIndex) => (
+				<div
+					class="a-marquee-set"
+					data-marquee-set={setIndex === 0 ? '' : undefined}
+					aria-hidden={setIndex === 0 ? undefined : 'true'}
+				>
+					{partners.map((partner) => (
+						<div class="flex shrink-0 items-center gap-14">
+							{partner.src ? (
+								<img
+									src={partner.src}
+									alt={setIndex === 0 ? partner.name : ''}
+									loading="eager"
+									decoding="async"
+									class={marqueeLogoClass(partner)}
+								/>
+							) : (
+								<span class="font-serif text-lg text-cream-dim grayscale transition-colors duration-300 hover:text-cream">
+									{partner.name}
+								</span>
+							)}
+						</div>
+					))}
+				</div>
+			))}
+		</div>
+	</div>
+) : (
+	<div
+		class:list={[
+			'flex flex-wrap items-center justify-around gap-x-8 gap-y-6',
+			className,
+		]}
+		data-reveal-group
+		data-reveal-stagger="90"
+	>
+		{partners.map((partner) => (
+			<div key={partner.name} data-reveal class="flex min-w-0 items-center">
+				{partner.src ? (
+					<img
+						src={partner.src}
+						alt={partner.name}
+						loading="lazy"
+						decoding="async"
+						class={partner.logoClass || logoClass || 'h-8 max-w-[170px] object-contain'}
+					/>
+				) : (
+					<span
+						class:list={[
+							'text-center leading-snug text-cream-dim transition-colors duration-300 hover:text-cream',
+							wordmarkClass,
+						]}
+					>
+						{partner.name}
+					</span>
+				)}
+			</div>
+		))}
+	</div>
+)}

@@ -1,0 +1,112 @@
+---
+import { getCollection } from 'astro:content';
+
+import Layout from '../../../layouts/Layout.astro';
+import PageHero from '../../../components/PageHero.astro';
+import EyebrowTag from '../../../components/EyebrowTag.astro';
+import NewsCard from '../../../components/NewsCard.astro';
+import CTAButton from '../../../components/CTAButton.astro';
+
+import {
+	categoriesOf,
+	categoryHref,
+	categoryLabels,
+	countByCategory,
+	sortNews,
+	yearsOf,
+	yearHref,
+	type NewsCategory,
+} from '../../../utils/news';
+import { photos } from '../../../utils/photos';
+
+export async function getStaticPaths() {
+	const all = await getCollection('news');
+	return categoriesOf(all).map((category) => ({ params: { kategori: category } }));
+}
+
+const kategori = Astro.params.kategori as NewsCategory;
+const all = sortNews(await getCollection('news'));
+const items = all.filter((item) => item.data.category === kategori);
+const counts = countByCategory(all);
+const label = categoryLabels[kategori];
+const years = [...new Set(items.map((item) => item.data.date.getFullYear()))].sort((a, b) => b - a);
+---
+
+<Layout
+	title={`${label} | Berita SKALA`}
+	description={`Kumpulan berita dan kegiatan SKALA dalam topik ${label}.`}
+>
+	<PageHero
+		image={photos.tanamSapar}
+		alt="Relawan menanam bibit pohon muda ke dalam tanah"
+		position="center 40%"
+	>
+		<nav class="hero-eyebrow" aria-label="Breadcrumb" data-reveal>
+			<a href="/berita" class="transition-colors hover:text-white">Berita</a>
+			<span aria-hidden="true">/</span>
+			<span class="text-white/85">{label}</span>
+		</nav>
+		<h1 class="hero-title" data-reveal>
+			{label}
+		</h1>
+		<p class="hero-lead" data-reveal>
+			{items.length} berita dalam topik ini.
+		</p>
+	</PageHero>
+
+	<section class="bg-news-paper">
+		<div class="container-skala py-14 lg:py-20">
+			<div class="grid gap-6 sm:grid-cols-2" data-reveal-group>
+				{items.map((item) => (
+					<NewsCard item={item} layout="row" showCategory={false} />
+				))}
+			</div>
+		</div>
+	</section>
+
+	<!-- Navigasi arsip: penuh di bawah, bukan kolom sempit di samping -->
+	<section class="news-rule bg-news-surface">
+		<div class="container-skala py-14 lg:py-20">
+			<div class="grid gap-12 lg:grid-cols-2 lg:gap-16">
+				<div data-reveal>
+					<EyebrowTag as="h2" tone="news" text="Semua Topik" />
+					<ul class="mt-6 space-y-3">
+						{categoriesOf(all).map((category) => (
+							<li>
+								<a
+									href={categoryHref(category)}
+									class:list={[
+										'flex items-center justify-between gap-4 border-b border-news-rule py-2.5 text-sm font-medium transition-colors',
+										category === kategori
+											? 'text-news-accent'
+											: 'text-news-body hover:text-news-accent',
+									]}
+								>
+									<span>{categoryLabels[category]}</span>
+									<span class="tabular-nums text-news-muted">{counts[category] ?? 0}</span>
+								</a>
+							</li>
+						))}
+					</ul>
+				</div>
+
+				{years.length > 0 && (
+					<div data-reveal>
+						<EyebrowTag as="h2" tone="news" text="Tahun" />
+						<div class="mt-6 flex flex-wrap gap-2">
+							{years.map((year) => (
+								<a href={yearHref(year)} class="news-chip">{year}</a>
+							))}
+						</div>
+
+						<div class="mt-8">
+							<CTAButton href="/berita" variant="outline" size="sm">
+								Semua Berita
+							</CTAButton>
+						</div>
+					</div>
+				)}
+			</div>
+		</div>
+	</section>
+</Layout>

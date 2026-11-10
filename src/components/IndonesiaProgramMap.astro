@@ -1,0 +1,425 @@
+---
+import {
+	provinces,
+	projectPoint,
+	INDONESIA_MAP_WIDTH as MAP_WIDTH,
+	INDONESIA_MAP_HEIGHT as MAP_HEIGHT,
+} from '../data/indonesia-provinces';
+import { regionCoordinate, splitLocation, locationKey } from '../utils/regions';
+import { statusLabel } from '../utils/project';
+
+type Status = keyof typeof statusLabel;
+
+interface RegionInput {
+	id: string;
+	location: string;
+	status: Status;
+	area: string;
+	kthCount: number;
+}
+
+interface Props {
+	regions: RegionInput[];
+}
+
+interface Marker {
+	id: string;
+	order: number;
+	location: string;
+	regency: string;
+	province: string;
+	provinceCode: string;
+	statusText: string;
+	area: string;
+	kthCount: number;
+	x: number;
+	y: number;
+	clustered: boolean;
+	below: boolean;
+	tipLeft: number;
+	tipTop: number;
+}
+
+const { regions } = Astro.props;
+
+const provinceByName = new Map(provinces.map((p) => [p.name.trim().toLowerCase(), p.code]));
+
+const FAN_RADIUS = 12;
+const TOOLTIP_FLIP_Y = 74;
+
+interface Draft {
+	id: string;
+	order: number;
+	location: string;
+	regency: string;
+	province: string;
+	provinceCode: string;
+	statusText: string;
+	area: string;
+	kthCount: number;
+	baseX: number;
+	baseY: number;
+	clustered: boolean;
+}
+
+const drafts: Draft[] = regions.map((region, index) => {
+	const { regency, province } = splitLocation(region.location);
+	const coordinate = regionCoordinate(region.location);
+	const point = coordinate ? projectPoint(coordinate.lon, coordinate.lat) : { x: 0, y: 0 };
+	return {
+		id: region.id,
+		order: index + 1,
+		location: region.location,
+		regency,
+		province,
+		provinceCode: provinceByName.get(province.trim().toLowerCase()) ?? '',
+		statusText: statusLabel[region.status],
+		area: region.area,
+		kthCount: region.kthCount,
+		baseX: point.x,
+		baseY: point.y,
+		clustered: false,
+	};
+});
+
+/** Program yang berbagi koordinat yang sama dibingkai melingkar agar marker tidak bertumpuk. */
+const fanGroups = new Map<string, Draft[]>();
+for (const draft of drafts) {
+	if (!regionCoordinate(draft.location)) continue;
+	const key = `${draft.baseX.toFixed(2)},${draft.baseY.toFixed(2)}`;
+	const group = fanGroups.get(key);
+	if (group) group.push(draft);
+	else fanGroups.set(key, [draft]);
+}
+
+for (const group of fanGroups.values()) {
+	const size = group.length;
+	if (size < 2) continue;
+	group.forEach((draft, index) => {
+		const angle = ((-90 + (360 * index) / size) * Math.PI) / 180;
+		draft.baseX += FAN_RADIUS * Math.cos(angle);
+		draft.baseY += FAN_RADIUS * Math.sin(angle);
+		draft.clustered = true;
+	});
+}
+
+const markers: Marker[] = drafts.map((draft) => ({
+	id: draft.id,
+	order: draft.order,
+	location: draft.location,
+	regency: draft.regency,
+	province: draft.province,
+	provinceCode: draft.provinceCode,
+	statusText: draft.statusText,
+	area: draft.area,
+	kthCount: draft.kthCount,
+	x: Math.round(draft.baseX * 10) / 10,
+	y: Math.round(draft.baseY * 10) / 10,
+	clustered: draft.clustered,
+	below: draft.baseY < TOOLTIP_FLIP_Y,
+	tipLeft: Math.round((draft.baseX / MAP_WIDTH) * 10000) / 100,
+	tipTop: Math.round((draft.baseY / MAP_HEIGHT) * 10000) / 100,
+}));
+
+const provinceStats = new Map<string, number>();
+for (const marker of markers) {
+	if (!marker.provinceCode) continue;
+	provinceStats.set(marker.provinceCode, (provinceStats.get(marker.provinceCode) ?? 0) + 1);
+}
+
+const unplaced = markers.filter((m) => !m.provinceCode || !regionCoordinate(m.location));
+---
+
+<figure class="mt-10" data-program-map>
+	<div
+		class="relative overflow-hidden rounded-2xl border border-ref-line bg-ink-card p-4 sm:p-6"
+		style={`--map-w:${MAP_WIDTH};--map-h:${MAP_HEIGHT};`}
+	>
+		<svg
+			class="block h-auto w-full"
+			viewBox={`0 0 ${MAP_WIDTH} ${MAP_HEIGHT}`}
+			role="img"
+			aria-label="Peta Indonesia dengan highlight provinsi yang memiliki program SKALA"
+		>
+			<g data-map-provinces>
+				{provinces.map((province) => {
+					const stat = provinceStats.get(province.code);
+					return (
+						<path
+							d={province.d}
+							data-province={province.code}
+							data-has-program={stat ? 'true' : 'false'}
+							class="map-province"
+							fill={stat ? `color-mix(in srgb, var(--color-olive) ${34 + Math.min(stat, 3) * 16}%, var(--color-ink-raise))` : 'var(--color-ink-raise)'}
+						>
+							<title>{province.name}{stat ? ` — ${stat} program SKALA` : ''}</title>
+						</path>
+					);
+				})}
+			</g>
+
+			<g data-map-markers>
+				{markers.map((marker) => (
+					<g
+						transform={`translate(${marker.x} ${marker.y})`}
+						data-marker={marker.id}
+						data-province={marker.provinceCode}
+						class="map-marker"
+						tabindex="0"
+						role="button"
+						aria-label={`Lokasi ${marker.order}: ${marker.location}`}
+					>
+						<circle class="map-marker-halo" r="20" />
+						<circle class="map-marker-dot" r="11.5" />
+						<text class="map-marker-label" y="4.2" text-anchor="middle">
+							{String(marker.order).padStart(2, '0')}
+						</text>
+					</g>
+				))}
+			</g>
+		</svg>
+
+		{markers.map((marker) => (
+			<div
+				data-map-tip={marker.id}
+				class={`map-tip ${marker.below ? 'is-below' : ''}`}
+				style={`left:${marker.tipLeft}%;top:${marker.tipTop}%;`}
+				aria-hidden="true"
+			>
+				<p class="font-sans text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-olive">
+					{String(marker.order).padStart(2, '0')} · {marker.province}
+				</p>
+				<p class="mt-1.5 font-sans text-[0.95rem] font-semibold leading-[1.35] text-cream">{marker.regency}</p>
+				<dl class="mt-2.5 space-y-1 text-xs text-cream-dim">
+					<div class="flex justify-between gap-4">
+						<dt>Status</dt>
+						<dd class="font-semibold text-cream">{marker.statusText}</dd>
+					</div>
+					{marker.area !== 'Belum ditetapkan' && <div class="flex justify-between gap-4">
+						<dt>Luas lahan</dt>
+						<dd class="font-semibold text-cream">{marker.area}</dd>
+					</div>}
+					{marker.kthCount > 0 && <div class="flex justify-between gap-4">
+						<dt>Kelompok mitra</dt>
+						<dd class="font-semibold text-cream">{marker.kthCount}</dd>
+					</div>}
+				</dl>
+			</div>
+		))}
+
+		{unplaced.length > 0 && (
+			<p class="mt-4 border-l-[3px] border-ref-line pl-4 text-xs leading-[1.5] text-cream-dim">
+				{unplaced.length} lokasi belum punya koordinat pada peta.
+			</p>
+		)}
+	</div>
+
+	<figcaption class="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-cream-dim">
+		<span class="inline-flex items-center gap-2">
+			<span class="size-3 rounded-sm border border-ref-line bg-ink-raise"></span>
+			Provinsi tanpa program
+		</span>
+		<span class="inline-flex items-center gap-2">
+			<span class="size-3 rounded-sm border border-ref-line" style="background:color-mix(in srgb, var(--color-olive) 50%, var(--color-ink-raise))"></span>
+			Provinsi dengan program SKALA
+		</span>
+		<span class="inline-flex items-center gap-2">
+			<svg class="size-4" viewBox="0 0 24 24" aria-hidden="true">
+				<circle cx="12" cy="12" r="11" fill="var(--color-olive)" />
+				<text x="12" y="16" text-anchor="middle" font-size="11" font-weight="700" fill="#fff">01</text>
+			</svg>
+			Nomor urut mengikuti daftar di bawah
+		</span>
+	</figcaption>
+</figure>
+
+<style>
+	.map-province {
+		stroke: var(--color-ink-card);
+		stroke-width: 1.1;
+		stroke-linejoin: round;
+		transition: fill 0.3s ease, opacity 0.3s ease;
+	}
+
+	.map-province[data-has-program='true'] {
+		cursor: pointer;
+	}
+
+	.map-province:hover,
+	.map-province.is-active {
+		fill: color-mix(in srgb, var(--color-olive) 78%, var(--color-ink-raise));
+	}
+
+	.map-marker {
+		cursor: pointer;
+		outline: none;
+	}
+
+	.map-marker-halo {
+		fill: var(--color-olive);
+		opacity: 0;
+		transition: opacity 0.3s ease, r 0.3s ease;
+	}
+
+	.map-marker-dot {
+		fill: var(--color-olive);
+		stroke: var(--color-ink-card);
+		stroke-width: 2.4;
+		transition: r 0.3s ease, fill 0.3s ease;
+	}
+
+	.map-marker-label {
+		fill: #fff;
+		font-family: var(--font-sans);
+		font-size: 12.5px;
+		font-weight: 700;
+		pointer-events: none;
+		transition: fill 0.3s ease;
+	}
+
+	.map-marker:hover .map-marker-halo,
+	.map-marker:focus-visible .map-marker-halo,
+	.map-marker.is-active .map-marker-halo {
+		opacity: 0.22;
+		r: 20;
+	}
+
+	.map-marker:hover .map-marker-dot,
+	.map-marker:focus-visible .map-marker-dot,
+	.map-marker.is-active .map-marker-dot {
+		fill: var(--color-cream);
+	}
+
+	.map-marker:hover .map-marker-label,
+	.map-marker:focus-visible .map-marker-label,
+	.map-marker.is-active .map-marker-label {
+		fill: var(--color-ink);
+	}
+
+	.map-marker:focus-visible .map-marker-dot {
+		stroke: var(--color-cream);
+	}
+
+	.map-tip {
+		position: absolute;
+		z-index: 2;
+		width: max-content;
+		max-width: 16rem;
+		transform: translate(-50%, calc(-100% - 2.6rem));
+		padding: 0.85rem 1rem;
+		border-radius: 0.9rem;
+		border: 1px solid var(--color-ref-line);
+		background: var(--color-ink);
+		box-shadow: 0 18px 40px -20px rgb(0 0 0 / 0.45);
+		opacity: 0;
+		visibility: hidden;
+		pointer-events: none;
+		transition: opacity 0.2s ease, visibility 0.2s ease;
+	}
+
+	.map-tip.is-below {
+		transform: translate(-50%, 2.6rem);
+	}
+
+	.map-tip.is-visible {
+		opacity: 1;
+		visibility: visible;
+	}
+</style>
+
+<script>
+	function initProgramMap(root: HTMLElement): void {
+		if (root.dataset.mapReady === 'true') return;
+		root.dataset.mapReady = 'true';
+
+		const markers = Array.from(root.querySelectorAll<HTMLElement>('[data-marker]'));
+		const provinces = Array.from(
+			root.querySelectorAll<SVGPathElement>('[data-map-provinces] [data-province]'),
+		);
+		const tips = new Map(
+			Array.from(root.querySelectorAll<HTMLElement>('[data-map-tip]')).map((tip) => [
+				tip.dataset.mapTip ?? '',
+				tip,
+			]),
+		);
+		const markerIds = new Set(markers.map((marker) => marker.dataset.marker));
+		const cards = Array.from(document.querySelectorAll<HTMLElement>('[data-region-card]')).filter(
+			(card) => markerIds.has(card.dataset.regionCard),
+		);
+
+		const hideAll = (): void => {
+			markers.forEach((marker) => marker.classList.remove('is-active'));
+			provinces.forEach((province) => province.classList.remove('is-active'));
+			tips.forEach((tip) => tip.classList.remove('is-visible'));
+		};
+
+		const showTip = (marker: HTMLElement): void => {
+			const tip = tips.get(marker.dataset.marker ?? '');
+			if (tip) tip.classList.add('is-visible');
+		};
+
+		const activate = (id: string, withTip: boolean): void => {
+			hideAll();
+			const marker = markers.find((m) => m.dataset.marker === id);
+			if (!marker) return;
+			marker.classList.add('is-active');
+			const province = marker.dataset.province;
+			if (province) {
+				provinces
+					.filter((p) => p.dataset.province === province)
+					.forEach((p) => p.classList.add('is-active'));
+			}
+			if (withTip) showTip(marker);
+		};
+
+		markers.forEach((marker) => {
+			const id = marker.dataset.marker ?? '';
+			marker.addEventListener('mouseenter', () => activate(id, true));
+			marker.addEventListener('focus', () => activate(id, true));
+			marker.addEventListener('mouseleave', hideAll);
+			marker.addEventListener('blur', hideAll);
+			marker.addEventListener('click', () => {
+				activate(id, true);
+				const card = cards.find((c) => c.dataset.regionCard === id);
+				card?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+			});
+			marker.addEventListener('keydown', (event) => {
+				if (event.key === 'Enter' || event.key === ' ') {
+					event.preventDefault();
+					marker.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+				}
+			});
+		});
+
+		provinces.forEach((province) => {
+			const code = province.dataset.province;
+			if (!code || province.dataset.hasProgram !== 'true') return;
+			province.addEventListener('mouseenter', () => {
+				hideAll();
+				province.classList.add('is-active');
+				markers
+					.filter((marker) => marker.dataset.province === code)
+					.forEach((marker) => marker.classList.add('is-active'));
+			});
+			province.addEventListener('mouseleave', hideAll);
+		});
+
+		cards.forEach((card) => {
+			const id = card.dataset.regionCard ?? '';
+			card.addEventListener('mouseenter', () => activate(id, false));
+			card.addEventListener('focusin', () => activate(id, false));
+			card.addEventListener('mouseleave', hideAll);
+		});
+
+		root.addEventListener('mouseleave', hideAll);
+	}
+
+	function initAllProgramMaps(): void {
+		document
+			.querySelectorAll<HTMLElement>('[data-program-map]')
+			.forEach((root) => initProgramMap(root));
+	}
+
+	initAllProgramMaps();
+	document.addEventListener('astro:page-load', initAllProgramMaps);
+</script>

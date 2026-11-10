@@ -1,0 +1,284 @@
+---
+import { getImage } from 'astro:assets';
+import { getCollection } from 'astro:content';
+import Layout from '../../layouts/Layout.astro';
+import EyebrowTag from '../../components/EyebrowTag.astro';
+import PageHero from '../../components/PageHero.astro';
+import CTAButton from '../../components/CTAButton.astro';
+import NewsCard from '../../components/NewsCard.astro';
+import Pagination from '../../components/Pagination.astro';
+import {
+	PAGE_SIZE,
+	categoriesOf,
+	categoryHref,
+	categoryLabels,
+	countByCategory,
+	formatDate,
+	newsHref,
+	sortNews,
+	yearHref,
+	yearsOf,
+} from '../../utils/news';
+import { photos } from '../../utils/photos';
+
+export async function getStaticPaths({ paginate }: { paginate: any }) {
+	const all = sortNews(await getCollection('news'));
+	return paginate(all, { pageSize: PAGE_SIZE });
+}
+
+const { page } = Astro.props as any;
+
+const all = sortNews(await getCollection('news'));
+const counts = countByCategory(all);
+const categories = categoriesOf(all);
+const years = yearsOf(all);
+
+const isFirst = page.currentPage === 1;
+// Berita pilihan hanya di halaman 1 supaya tidak menghambat halaman berikutnya.
+const lead = isFirst ? all.find((item) => item.data.featured) ?? all[0] : undefined;
+const leadId = lead?.id;
+// Penting: sisanya harus berasal dari page.data (isi halaman ini), bukan `all`.
+// Kalau dari `all`, halaman 1 ikut merender seluruh 9 berita sehingga paginasi
+//_accounted tidak cocok dan berita yang sama muncul lagi di halaman 2.
+const rest = leadId ? page.data.filter((item) => item.id !== leadId) : page.data;
+const leadCover = lead?.data.cover;
+
+const leadCoverSrc = leadCover
+	? await getImage({ src: leadCover, width: 1600, height: 900, format: 'webp' })
+	: null;
+const leadCoverUrl = leadCoverSrc ? new URL(leadCoverSrc.src, Astro.site).href : undefined;
+
+const pageTitle = isFirst ? 'Berita' : `Berita — Halaman ${page.currentPage}`;
+const pageSuffix = isFirst ? '' : ` — Halaman ${page.currentPage}`;
+const pageDescription = isFirst
+	? 'Kabar terbaru, catatan lapangan, dan temuan program konservasi, pemberdayaan masyarakat, serta kemitraan SKALA.'
+	: `Kabar SKALA, halaman ${page.currentPage} dari ${page.lastPage}.`;
+
+const newsSchema = {
+	'@context': 'https://schema.org',
+	'@type': 'NewsMediaOrganization',
+	name: 'Yayasan Studi Komunitas Alamiah (SKALA)',
+	url: new URL('/', Astro.site).href,
+};
+---
+
+<Layout title={pageTitle} description={pageDescription} image={leadCoverUrl}>
+	<script
+		type="application/ld+json"
+		slot="head"
+		set:html={JSON.stringify({
+			'@context': 'https://schema.org',
+			'@graph': [
+				{
+					'@type': 'CollectionPage',
+					'@id': `${new URL('/berita', Astro.site).href}#webpage`,
+					url: new URL(isFirst ? '/berita' : `/berita/${page.currentPage}`, Astro.site).href,
+					name: `Berita${pageSuffix}`,
+					description: pageDescription,
+					inLanguage: 'id-ID',
+					isPartOf: { '@id': `${new URL('/', Astro.site).href}#website` },
+					breadcrumb: { '@id': `${new URL('/berita', Astro.site).href}#breadcrumb` },
+					mainEntity: { '@id': `${new URL('/berita', Astro.site).href}#list` },
+				},
+				{
+					'@type': 'WebSite',
+					'@id': `${new URL('/', Astro.site).href}#website`,
+					url: new URL('/', Astro.site).href,
+					name: 'SKALA',
+					inLanguage: 'id-ID',
+					publisher: { '@id': `${new URL('/', Astro.site).href}#organization` },
+				},
+				{
+					'@type': 'NewsMediaOrganization',
+					'@id': `${new URL('/', Astro.site).href}#organization`,
+					name: 'Yayasan Studi Komunitas Alamiah (SKALA)',
+					alternateName: 'SKALA',
+					url: new URL('/', Astro.site).href,
+					logo: {
+						'@type': 'ImageObject',
+						url: new URL('/skala-logo.png', Astro.site).href,
+					},
+					email: 'office@skalapro.or.id',
+					telephone: '+62878-7863-8940',
+				},
+				{
+					'@type': 'ItemList',
+					'@id': `${new URL('/berita', Astro.site).href}#list`,
+					name: 'Berita SKALA',
+					numberOfItems: all.length,
+					itemListOrder: 'https://schema.org/ItemListOrderDescending',
+					itemListElement: all.map((item, index) => ({
+						'@type': 'ListItem',
+						position: index + 1,
+						url: new URL(newsHref(item), Astro.site).href,
+						name: item.data.title,
+					})),
+				},
+				{
+					'@type': 'BreadcrumbList',
+					'@id': `${new URL('/berita', Astro.site).href}#breadcrumb`,
+					itemListElement: [
+						{
+							'@type': 'ListItem',
+							position: 1,
+							name: 'Beranda',
+							item: new URL('/', Astro.site).href,
+						},
+						{
+							'@type': 'ListItem',
+							position: 2,
+							name: 'Berita',
+							item: new URL('/berita', Astro.site).href,
+						},
+					],
+				},
+			],
+		})}
+		is:inline
+	/>
+
+	<PageHero
+		image={photos.workshopLapangan}
+		alt="Peserta Urija bekerja sama di meja workshop lapangan"
+		position="center 40%"
+		eyebrow="Ruang Berita"
+	>
+		<h1 class="hero-title" data-reveal>Berita & Cerita dari Lapangan</h1>
+		<p class="hero-lead" data-reveal>
+			Catatan lapangan, temuan, dan pembelajaran dari program konservasi, pemberdayaan, serta
+			kemitraan SKALA.
+		</p>
+		<p class="hero-eyebrow mt-2" data-reveal>
+			{all.length} berita · diperbarui {formatDate(all[0].data.date)}
+		</p>
+	</PageHero>
+
+	<!-- Filter kategori: penuh, jadi baris penuh -- bukan sidebar sempit -->
+	<section class="news-rule bg-news-paper">
+		<div class="container-skala py-8 lg:py-10">
+			<div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+				<div class="flex flex-wrap items-center gap-2" data-reveal-group>
+					<a
+						href="/berita"
+						aria-current={isFirst ? 'true' : undefined}
+						class="news-chip"
+					>
+						Semua <span class="tabular-nums opacity-60">{all.length}</span>
+					</a>
+					{categories.map((category) => (
+						<a href={categoryHref(category)} class="news-chip" data-reveal>
+							{categoryLabels[category]}
+							<span class="tabular-nums opacity-60">{counts[category] ?? 0}</span>
+						</a>
+					))}
+				</div>
+				<p class="text-sm font-medium text-news-muted" data-reveal>
+					{isFirst ? 'Menampilkan berita terbaru' : `Halaman ${page.currentPage} dari ${page.lastPage}`}
+				</p>
+			</div>
+		</div>
+	</section>
+
+	<!-- Daftar berita: editorial penuh. Tidak ada lagi kolom 300px yang kosong
+	     di samping — pada >=lg daftar menjadi tiga kolom. Berita pilihan (lead)
+	     membentang dua kolom + di baris paling atas. -->
+	<section class="bg-news-paper">
+		<div class="container-skala pb-16 lg:pb-24">
+			{isFirst && lead ? (
+				<>
+					<div class="flex items-baseline gap-4 pb-8" data-reveal>
+						<EyebrowTag as="h2" tone="news" text="Terbaru" />
+						<span class="h-px flex-1 bg-news-rule"></span>
+					</div>
+
+					<div class="grid gap-6 lg:grid-cols-3" data-reveal-group>
+						<div class="lg:col-span-2">
+							<NewsCard item={lead} featured />
+						</div>
+						{rest.slice(0, 1).map((item) => (
+							<NewsCard item={item} />
+						))}
+					</div>
+
+					{rest.length > 1 && (
+						<div class="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3" data-reveal-group>
+							{rest.slice(1).map((item) => (
+								<NewsCard item={item} />
+							))}
+						</div>
+					)}
+				</>
+			) : (
+				<div class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3" data-reveal-group>
+					{page.data.map((item: any) => (
+						<NewsCard item={item} />
+					))}
+				</div>
+			)}
+
+			<Pagination page={page} />
+		</div>
+	</section>
+
+	<!-- Arsip: tahun + topik, kini horizontal penuh di bawah daftar -->
+	<section class="news-rule bg-news-surface">
+		<div class="container-skala py-16 lg:py-20">
+			<div class="grid gap-12 lg:grid-cols-3 lg:gap-16">
+				<div data-reveal>
+					<EyebrowTag as="h2" tone="news" text="Arsip Tahun" />
+					<div class="mt-6 flex flex-wrap gap-2">
+						{years.map((year) => (
+							<a href={yearHref(year)} class="news-chip">{year}</a>
+						))}
+					</div>
+				</div>
+
+				<div data-reveal>
+					<EyebrowTag as="h2" tone="news" text="Topik" />
+					<ul class="mt-6 space-y-3">
+						{categories.map((category) => (
+							<li>
+								<a
+									href={categoryHref(category)}
+									class="group flex items-center justify-between gap-4 border-b border-news-rule py-2.5 text-sm font-medium text-news-body transition-colors hover:text-news-accent"
+								>
+									<span>{categoryLabels[category]}</span>
+									<span class="tabular-nums text-news-muted">
+										{counts[category] ?? 0}
+									</span>
+								</a>
+							</li>
+						))}
+					</ul>
+				</div>
+
+				<div
+					class="flex flex-col justify-between rounded-2xl bg-news-accent p-7 text-white lg:p-8"
+					data-reveal
+				>
+					<div>
+						<h2 class="text-lg font-bold">Ingin mengikuti program ini?</h2>
+						<p class="mt-2.5 text-sm leading-relaxed text-white/80">
+							Kami rutin menerbitkan catatan lapangan dan temuan monitoring setiap kegiatan.
+						</p>
+					</div>
+					<div class="mt-6">
+						<CTAButton href="/publikasi" variant="hero" size="sm">Lihat Publikasi</CTAButton>
+					</div>
+				</div>
+			</div>
+
+			{!isFirst && (
+				<div class="mt-12 border-t border-news-rule pt-8" data-reveal>
+					<p class="text-sm text-news-body">
+						Anda sedang melihat halaman {page.currentPage}. Berita terbaru selalu di halaman
+						pertama.
+					</p>
+					<div class="mt-4">
+						<CTAButton href="/berita" variant="outline" size="sm">Halaman 1</CTAButton>
+					</div>
+				</div>
+			)}
+		</div>
+	</section>
+</Layout>

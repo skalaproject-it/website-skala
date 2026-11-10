@@ -1,0 +1,116 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { getImage } from 'astro:assets';
+import PageHero from '../components/PageHero.astro';
+import EyebrowTag from '../components/EyebrowTag.astro';
+import CTAButton from '../components/CTAButton.astro';
+import { photos } from '../utils/photos';
+
+/* Belum ada dokumen laporan tahunan resmi yang terverifikasi tersedia, sehingga
+   section ini tidak lagi memuat entry per tahun dengan tombol unduh. */
+const annualReportStatement =
+	'Laporan tahunan komprehensif SKALA sedang disusun sebagai bagian dari komitmen transparansi kami. Ringkasan capaian program dan status pengelolaan dana tersedia atas permintaan tertulis dari calon mitra.';
+
+/* `href` ke halaman yang benar-benar ada (cross-reference) versus permintaan
+   dokumen via /kontak, karena file-nya belum terverifikasi ada. */
+const legalDocs = [
+	{
+		title: 'Status Badan Hukum & Struktur Organisasi',
+		date: 'Terus diperbarui',
+		desc: 'SK Kemenkumham, susunan Pembina/Pengurus/Pengawas, dan kebijakan keuangan.',
+		cta: 'Buka Dokumen',
+		href: '/tata-kelola',
+	},
+	{
+		title: 'Kebijakan Safeguard Sosial-Lingkungan',
+		date: 'Terus diperbarui',
+		desc: 'Komitmen FPIC, perlindungan kelompok rentan, dan praktik konservasi bertanggung jawab.',
+		cta: 'Buka Dokumen',
+		href: '/tata-kelola',
+	},
+	{
+		title: 'Anggaran Dasar Yayasan',
+		date: 'Dokumen internal',
+		desc: 'Dokumen akta pendirian dan anggaran dasar yang telah dilegalisasi.',
+		cta: 'Hubungi Kami',
+		href: '/kontak',
+	},
+	{
+		title: 'Kode Etik & Kebijakan Anti-Fraud',
+		date: 'Dokumen internal',
+		desc: 'Standar perilaku internal dan mekanisme pelaporan pelanggaran.',
+		cta: 'Hubungi Kami',
+		href: '/kontak',
+	},
+];
+
+const pageTitle = 'Publikasi & Dokumen — SKALA | Transparansi Program dan Tata Kelola';
+const pageDescription =
+	'Akses ringkasan tata kelola, kebijakan, dan status pelaporan program Yayasan Studi Komunitas Alamiah (SKALA). Dokumen lengkap tersedia atas permintaan resmi.';
+
+/* og:image memakai foto hero halaman ini, konsisten dengan /program. */
+const ogImage = await getImage({
+	src: photos.penelitianLapangan,
+	width: 1200,
+	height: 630,
+	fit: 'cover',
+	format: 'jpeg',
+});
+const ogImageUrl = new URL(ogImage.src, Astro.site).toString();
+---
+
+<Layout title={pageTitle} description={pageDescription} image={ogImageUrl}>
+	<!-- Header -->
+	<PageHero image={photos.penelitianLapangan} alt="Peneliti meninjau data dan catatan lapangan" position="center 40%">
+		<h1 class="hero-title" data-reveal>
+			Dokumen Formal SKALA dalam Satu Tempat
+		</h1>
+		<p class="hero-lead" data-reveal>
+			Laporan program dan keuangan, dokumen legalitas, serta kebijakan pendukung dalam satu tempat yang
+			mudah diakses.
+		</p>
+	</PageHero>
+
+	<!-- Laporan Tahunan -->
+	<section class="container-skala py-20 lg:py-24" data-reveal-group>
+		<EyebrowTag text="Laporan Tahunan" />
+		<h2 class="mt-6 font-serif text-[30px] font-semibold leading-[1.2] text-olive sm:text-[42px] lg:text-[50px] xl:text-[56px]" data-reveal>
+			Laporan program dan keuangan per tahun
+		</h2>
+
+		<div class="mt-10 rounded-2xl bg-ink-card p-8 lg:p-10" data-reveal>
+			<p class="text-sm leading-[1.7] text-cream/75 sm:text-base">{annualReportStatement}</p>
+			<div class="mt-7">
+				<CTAButton href="/kontak" variant="outline" size="sm">Hubungi Kami</CTAButton>
+			</div>
+		</div>
+	</section>
+
+	<!-- Legalitas & Kebijakan -->
+	<section class="container-skala py-20 lg:py-24" data-reveal-group>
+		<div class="rounded-2xl bg-ink-card p-8 lg:p-12">
+			<EyebrowTag text={'Dokumen Legalitas & Kebijakan'} />
+			<h2 class="mt-6 font-serif text-[30px] font-semibold leading-[1.2] text-olive sm:text-[42px] lg:text-[50px] xl:text-[56px]" data-reveal>
+				Ringkasan tata kelola dan kebijakan pendukung
+			</h2>
+
+			<div class="mt-10 divide-y divide-ink-rule rounded-2xl bg-white" data-reveal>
+				{legalDocs.map((doc) => (
+					<article class="flex flex-col justify-between gap-5 p-6 lg:flex-row lg:items-center lg:p-7">
+						<div class="min-w-0">
+							<h3 class="font-sans text-[1rem] font-semibold leading-[1.4] sm:text-[1.5rem] text-cream">{doc.title}</h3>
+							<p class="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-cream-dim">{doc.date}</p>
+							<p class="mt-2 text-sm leading-[1.5] text-cream/65">{doc.desc}</p>
+						</div>
+						<div class="shrink-0">
+							<CTAButton href={doc.href} variant="outline" size="sm">{doc.cta}</CTAButton>
+						</div>
+					</article>
+				))}
+			</div>
+			<p class="mt-4 text-xs leading-[1.5] text-cream-dim" data-reveal>
+				Dokumen tersedia atas permintaan resmi dari calon mitra.
+			</p>
+		</div>
+	</section>
+</Layout>

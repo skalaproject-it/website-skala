@@ -1,0 +1,76 @@
+---
+interface Props {
+	href?: string;
+	variant?: 'primary' | 'outline' | 'hero';
+	size?: 'md' | 'sm';
+	className?: string;
+}
+
+const { href = '#', variant = 'primary', size = 'md', className = '' } = Astro.props;
+const isHero = variant === 'hero';
+
+const base = 'group inline-flex items-center rounded-full font-semibold';
+const pads = {
+	md: 'gap-3 py-1.5 pl-6 pr-1.5',
+	sm: 'gap-3 py-1 pl-4 pr-1',
+	hero: 'gap-4 py-2 pl-6 pr-2',
+};
+const labelSizes = {
+	md: 'text-sm',
+	sm: 'text-xs',
+	hero: 'text-base font-semibold uppercase tracking-wide',
+};
+const variants = {
+	primary: 'bg-olive text-ink hover:bg-olive-soft',
+	outline:
+		'border border-ref-line bg-black/5 text-cream backdrop-blur-sm hover:border-black/25 hover:bg-black/10',
+	hero: 'bg-white text-olive',
+};
+const circleSizes = { md: 'h-10 w-10', sm: 'h-8 w-8', hero: 'h-9 w-9' };
+const circleVariants = {
+	primary: 'bg-ink text-cream',
+	outline: 'bg-olive text-ink',
+	hero: 'bg-olive text-ink',
+};
+const arrowSizes = { md: 'h-6 w-6', sm: 'h-[18px] w-[18px]', hero: 'h-6 w-6' };
+---
+
+<a
+	href={href}
+	class:list={[base, pads[variant === 'hero' ? 'hero' : size], variants[variant], className]}
+>
+	<span
+		class:list={['relative block overflow-hidden leading-normal', labelSizes[variant === 'hero' ? 'hero' : size]]}
+	>
+		<span
+			class="block whitespace-nowrap transition-transform duration-[400ms] ease-[cubic-bezier(0.39,0.575,0.565,1)] group-hover:-translate-y-full"
+			><slot /></span
+		>
+		<span
+			aria-hidden="true"
+			class="absolute left-0 top-full block whitespace-nowrap transition-transform duration-[400ms] ease-[cubic-bezier(0.39,0.575,0.565,1)] group-hover:-translate-y-full"
+			><slot /></span
+		>
+	</span>
+	<span
+		class:list={[
+			'grid shrink-0 place-items-center rounded-full transition-transform duration-[400ms] ease-[cubic-bezier(0.39,0.575,0.565,1)] group-hover:rotate-45',
+			circleSizes[variant === 'hero' ? 'hero' : size],
+			circleVariants[variant],
+		]}
+		aria-hidden="true"
+	>
+		<svg
+			class={arrowSizes[variant === 'hero' ? 'hero' : size]}
+			viewBox="0 0 20 20"
+			fill="none"
+			stroke="currentColor"
+			stroke-width="1.7"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+		>
+			<path d="M5 15L15 5" />
+			<path d="M6.875 5H15V13.125" />
+		</svg>
+	</span>
+</a>

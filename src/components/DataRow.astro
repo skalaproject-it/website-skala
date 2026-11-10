@@ -1,0 +1,35 @@
+---
+interface DataItem {
+	label: string;
+	value: string;
+}
+
+interface Props {
+	items: DataItem[];
+	divided?: boolean;
+	justify?: boolean;
+	className?: string;
+}
+
+const { items, divided = true, justify = false, className = '' } = Astro.props;
+---
+
+<dl
+	class:list={[
+		'grid w-full grid-cols-3',
+		justify ? 'justify-between' : 'gap-4 lg:gap-6',
+		className,
+	]}
+>
+	{items.map((item, index) => (
+		<div
+			class:list={[
+				'min-w-0',
+				divided && index > 0 ? 'border-l border-ref-line pl-4 lg:pl-6' : '',
+			]}
+		>
+			<dt class="text-[10px] font-semibold uppercase tracking-[0.18em] text-cream-dim">{item.label}</dt>
+			<dd class="mt-2 truncate font-serif text-lg font-medium text-cream lg:text-xl">{item.value}</dd>
+		</div>
+	))}
+</dl>

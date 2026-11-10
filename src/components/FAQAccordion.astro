@@ -1,0 +1,55 @@
+---
+interface FaqItem {
+	question: string;
+	answer: string;
+}
+
+interface Props {
+	items: FaqItem[];
+	single?: boolean;
+	className?: string;
+}
+
+const { items, single = false, className = '' } = Astro.props;
+---
+
+	<div class:list={['border-y border-ink-rule divide-y divide-ink-rule', className]} data-faq-group>
+	{items.map((item) => (
+		<details class="group" data-faq>
+			<summary class="flex cursor-pointer list-none items-center justify-between gap-6 py-5 [&::-webkit-details-marker]:hidden lg:py-6">
+				<h3 class="font-sans text-[1.125rem] font-semibold leading-[1.4] text-cream lg:text-[1.5rem]">{item.question}</h3>
+				<span
+					class="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-black/15 text-olive-soft transition-[transform,background-color,border-color] duration-300 group-open:rotate-45 group-open:border-olive-soft/50 group-open:bg-olive/15"
+					aria-hidden="true"
+				>
+					<svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+						<path d="M12 5v14" />
+						<path d="M5 12h14" />
+					</svg>
+				</span>
+			</summary>
+			<div class="acc">
+				<div class="acc-inner">
+					<p class="max-w-2xl pb-6 leading-[1.5] text-cream/65">{item.answer}</p>
+				</div>
+			</div>
+		</details>
+	))}
+</div>
+
+{
+	single && (
+		<script>
+			document.addEventListener('toggle', (event) => {
+				const detail = event.target as HTMLDetailsElement;
+				if (detail.tagName !== 'DETAILS' || !detail.matches('[data-faq]') || !detail.open) return;
+				const group = detail.closest('[data-faq-group]');
+				group
+					?.querySelectorAll<HTMLDetailsElement>('details[data-faq][open]')
+					.forEach((other) => {
+						if (other !== detail) other.removeAttribute('open');
+					});
+			});
+		</script>
+	)
+}

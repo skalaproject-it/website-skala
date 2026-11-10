@@ -1,0 +1,523 @@
+---
+import { Image, getImage } from 'astro:assets';
+import { getCollection, getEntry, render } from 'astro:content';
+
+import Layout from '../../layouts/Layout.astro';
+import EyebrowTag from '../../components/EyebrowTag.astro';
+import CTAButton from '../../components/CTAButton.astro';
+import NewsCard from '../../components/NewsCard.astro';
+
+import {
+	categoryHref,
+	categoryLabels,
+	formatDateLong,
+	newsHref,
+	readingTime,
+	sortNews,
+	toPlainText,
+	wordCount,
+} from '../../utils/news';
+import { photos } from '../../utils/photos';
+
+export async function getStaticPaths() {
+	const news = await getCollection('news');
+	return news.map((item) => ({ params: { slug: item.id } }));
+}
+
+const { slug } = Astro.params;
+const item = await getEntry('news', slug!);
+
+if (!item) {
+	throw new Error(`Berita tidak ditemukan: ${slug}`);
+}
+
+const { Content } = await render(item);
+const all = sortNews(await getCollection('news'));
+
+const index = all.findIndex((entry) => entry.id === item.id);
+const newer = index > 0 ? all[index - 1] : undefined;
+const older = index >= 0 && index < all.length - 1 ? all[index + 1] : undefined;
+
+// Versi lama: sameCategory + fallbackRelated digabung tanpa dedup, jadi satu
+// artikel bisa muncul dua kali kalau kategori beririsan. Sekarang dipecah.
+const pool = all.filter((entry) => entry.id !== item.id);
+const related = [
+	...pool.filter((entry) => entry.data.category === item.data.category),
+	...pool.filter((entry) => entry.data.category !== item.data.category),
+].slice(0, 3);
+
+const latest = pool.slice(0, 4);
+
+const category = item.data.category;
+const cover = item.data.cover ?? photos.workshopLapangan;
+const minutes = readingTime(item.body ?? '');
+const canonical = new URL(`/berita/${item.id}`, Astro.site).href;
+const shareText = encodeURIComponent(item.data.title);
+const shareUrl = encodeURIComponent(canonical);
+
+// Ringkasan 3–4 poin untuk kotak "Sorotan". Datanya di frontmatter, jadi
+// selalu bisa dipertanggungjawabkan ke isi artikel.
+const highlights = item.data.highlights ?? [];
+
+// Program terkait. Hanya artikel yang benar-benar menyebut mitranya di dalam
+// teks yang punya relasi ini — sisanya jatuh ke CTA umum, bukan tautan karangan.
+const projectSlugs = item.data.projects ?? [];
+const relatedProjects = (
+	await Promise.all(
+		projectSlugs.map(async (slugProject) => {
+			const entry = await getEntry('projects', slugProject);
+			return entry ? { slug: entry.id, title: entry.data.title } : null;
+		}),
+	)
+).filter((entry) => entry !== null);
+
+const tags = item.data.tags ?? [];
+
+const coverAlt = cover
+	? `${item.data.title} — ${item.data.location}`
+	: item.data.title;
+
+// og:image harus jpeg: beberapa crawler (Facebook/LinkedIn) tidak menampilkan
+// webp.'avif' pun tidak selalu didukung.
+const ogImage = await getImage({ src: cover, width: 1200, height: 630, format: 'jpg' });
+const ogImageUrl = new URL(ogImage.src, Astro.site).href;
+
+const plainBody = toPlainText(item.body ?? '');
+const words = wordCount(plainBody);
+
+const siteUrl = new URL('/', Astro.site).href;
+const orgName = 'Yayasan Studi Komunitas Alamiah (SKALA)';
+const logoUrl = new URL('/skala-logo.png', Astro.site).href;
+const sectionName = categoryLabels[category];
+
+const articleSchema = {
+	'@context': 'https://schema.org',
+	'@type': 'NewsArticle',
+	'@id': `${canonical}#article`,
+	mainEntityOfPage: { '@type': 'WebPage', '@id': canonical },
+	headline: item.data.title,
+	description: item.data.excerpt,
+	image: [{ '@type': 'ImageObject', url: ogImageUrl, width: 1200, height: 630 }],
+	datePublished: item.data.date.toISOString(),
+	inLanguage: 'id-ID',
+	isAccessibleForFree: true,
+	articleSection: sectionName,
+	keywords: [sectionName, item.data.location, 'SKALA', 'konservasi', ...tags].join(', '),
+	wordCount: words,
+	articleBody: plainBody,
+	...(tags.length > 0 ? { articleTag: tags } : {}),
+	// GEO: mesin telusur Answers/AI membaca blok ringkas + fakta di atas.
+	// news-highlights jadi target speakable utama, karena isinya poin
+	// konkret, bukan label metadata yang berulang. Selector yang menunjuk
+	// elemen yang sudah dihapus (dulu .news-facts) sengaja dibuang —
+	// selector yatim di schema itu cacat, bukan netral.
+	speakable: {
+		'@type': 'SpeakableSpecification',
+		cssSelector: ['.news-standfirst', '.news-highlights'],
+	},
+	author: { '@type': 'Organization', name: orgName, url: siteUrl },
+	publisher: {
+		'@type': 'Organization',
+		'@id': `${siteUrl}#organization`,
+		name: orgName,
+		url: siteUrl,
+		logo: { '@type': 'ImageObject', url: logoUrl },
+	},
+};
+
+const breadcrumbSchema = {
+	'@context': 'https://schema.org',
+	'@type': 'BreadcrumbList',
+	itemListElement: [
+		{ '@type': 'ListItem', position: 1, name: 'Beranda', item: siteUrl },
+		{
+			'@type': 'ListItem',
+			position: 2,
+			name: 'Berita',
+			item: new URL('/berita', Astro.site).href,
+		},
+		{
+			'@type': 'ListItem',
+			position: 3,
+			name: sectionName,
+			item: new URL(categoryHref(category), Astro.site).href,
+		},
+		{ '@type': 'ListItem', position: 4, name: item.data.title, item: canonical },
+	],
+};
+---
+
+<Layout
+	title={`${item.data.title} | SKALA`}
+	description={item.data.excerpt}
+	image={ogImageUrl}
+	pageType="article"
+	navTone="light"
+>
+	<Fragment slot="head">
+		<meta property="article:published_time" content={item.data.date.toISOString()} />
+		<meta property="article:author" content={orgName} />
+		<meta property="article:section" content={sectionName} />
+		<meta property="article:tag" content={item.data.location} />
+		<meta property="og:image:alt" content={coverAlt} />
+		<script
+			type="application/ld+json"
+			set:html={JSON.stringify([articleSchema, breadcrumbSchema])}
+			is:inline
+		/>
+	</Fragment>
+
+	<!--
+		Header artikel: mode LIGHT, tanpa pita dan tanpa gradien.
+
+		Ini akhir dari saga pita/gradien. Akar masalahnya: navbar global
+		fixed dengan logo putih mengasumsikan selalu ada background gelap.
+		Halaman artikel berlatar kertas, jadi asumsi itu tidak berlaku.
+		Solusinya bukan mencari warna pita yang "cukup bagus" — setiap
+		percobaan hanya memindahkan masalah. Solusinya memberi halaman ini
+		navbar dengan tone sendiri (logo + teks gelap di atas kertas).
+
+		Remah roti langsung di atas kertas; tidak ada lagi teks putih yang
+		menuntut background gelap. Judul tetap text-first di atas kertas,
+		sehingga hierarchy-nya bersih untuk mesin telusur.
+	-->
+	<header class="bg-news-paper">
+		<div class="container-skala pt-[5.5rem] pb-7 lg:pt-[6rem] lg:pb-9">
+			<nav aria-label="Remah roti" data-reveal>
+				<ol class="flex flex-wrap items-center gap-2 text-xs font-medium text-news-muted">
+					<li>
+						<a href="/" class="transition-colors hover:text-news-accent">Beranda</a>
+					</li>
+					<li aria-hidden="true">/</li>
+					<li>
+						<a href="/berita" class="transition-colors hover:text-news-accent">Berita</a>
+					</li>
+					<li aria-hidden="true">/</li>
+					<li>
+						<a
+							href={categoryHref(category)}
+							class="text-news-ink transition-colors hover:text-news-accent">{sectionName}</a
+						>
+					</li>
+				</ol>
+			</nav>
+		</div>
+
+		<div class="container-skala pb-9 lg:pb-12">
+			<a
+				href={categoryHref(category)}
+				class="inline-flex w-fit items-center rounded-full bg-news-accent-wash px-3 py-1.5 text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-news-accent transition-colors hover:bg-news-accent hover:text-white"
+				data-reveal
+			>
+				{sectionName}
+			</a>
+
+			<h1 class="news-display mt-5 text-news-ink" data-reveal>{item.data.title}</h1>
+
+			<p class="news-standfirst mt-6 max-w-[58ch] text-lg leading-[1.6] text-news-body" data-reveal>
+				{item.data.excerpt}
+			</p>
+
+			<div
+				class="news-meta mt-8 flex flex-wrap items-center gap-x-5 gap-y-3 border-t border-news-rule pt-6 text-sm font-medium text-news-muted"
+				data-reveal
+			>
+				<span class="inline-flex items-center gap-2 text-news-ink">
+					<span
+						class="grid h-7 w-7 place-items-center rounded-full bg-news-accent text-[0.625rem] font-bold text-white"
+						aria-hidden="true">S</span>
+					{orgName}
+				</span>
+				<span class="hidden h-3 w-px bg-news-line sm:block" aria-hidden="true"></span>
+				<time datetime={item.data.date.toISOString()}>{formatDateLong(item.data.date)}</time>
+				<span class="hidden h-3 w-px bg-news-line sm:block" aria-hidden="true"></span>
+				<span class="inline-flex items-center gap-1.5">
+					<svg class="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+						<path d="M8 14.5s5-4.2 5-8a5 5 0 1 0-10 0c0 3.8 5 8 5 8Z" />
+						<circle cx="8" cy="6.5" r="1.8" />
+					</svg>
+					{item.data.location}
+				</span>
+				<span class="hidden h-3 w-px bg-news-line sm:block" aria-hidden="true"></span>
+				<span>{minutes} menit baca</span>
+			</div>
+		</div>
+		</header>
+
+		<!-- Cover lebar penuh: di atas kertas yang bersih, tanpa fade di atas
+		     dan tanpa border kartu, supaya foto tetap tajam dan tidak
+		     terbaca sebagai kotak yang ditempel. -->
+		<div class="bg-news-paper">
+			<figure class="container-skala">
+				<div class="overflow-hidden rounded-2xl" data-image-reveal>
+					<Image
+						src={cover}
+						alt={coverAlt}
+						width={1600}
+						height={900}
+						loading="eager"
+						fetchpriority="high"
+						decoding="async"
+						class="aspect-[16/9] w-full object-cover"
+					/>
+				</div>
+				<figcaption class="mt-3 text-xs text-news-muted">
+					{item.data.title} — {item.data.location}
+				</figcaption>
+			</figure>
+		</div>
+
+	<!-- Isi artikel + sidebar -->
+	<section class="bg-news-paper">
+		<div class="container-skala py-14 lg:py-20">
+			<div class="grid gap-10 lg:grid-cols-[minmax(0,1fr)_19rem] lg:gap-12">
+
+				<!--
+					Grid 2 kolom: prosa + sidebar. Rail share vertikal di gutter
+					kiri dihapus — untuk yayasan, share jauh lebih rendah nilainya
+					dibanding aksi, dan kolom 3.25rem itu cuma memakan lebar baca
+					sambil menambah derau visual. Share sekarang jadi baris inline
+					ringkas di bawah artikel.
+				-->
+				<div class="min-w-0">
+					<!--
+						Sorotan: 3–4 poin konkret di atas badan artikel. Box ini
+						menggantikan dl "Fakta artikel" yang sebelumnya — isinya
+						tumpang tindih dengan meta line (lokasi, tanggal, waktu
+						baca muncul dua kali) dan karena itu terbaca amatir.
+						Sekarang meta line itu satu-satunya sumber metadata, dan
+						kotak ini khusus menjawab "isinya apa".
+					-->
+					{highlights.length > 0 && (
+						<section
+							class="news-highlights rounded-2xl border border-news-line bg-news-surface p-5 sm:p-7"
+							aria-labelledby="sorotan-judul"
+							data-reveal
+						>
+							<EyebrowTag as="h2" tone="news" text="Sorotan" id="sorotan-judul" />
+							<ul class="mt-4 space-y-3">
+								{highlights.map((point) => (
+									<li class="flex gap-3 text-[0.9375rem] leading-relaxed text-news-body">
+										<svg
+											class="mt-1 h-4 w-4 shrink-0 text-news-accent"
+											viewBox="0 0 16 16"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="1.75"
+											aria-hidden="true"
+										>
+											<path d="M3 8.5 6.5 12 13 4.5" stroke-linecap="round" stroke-linejoin="round" />
+										</svg>
+										<span>{point}</span>
+									</li>
+								))}
+							</ul>
+						</section>
+					)}
+
+					{highlights.length > 0 && <div class="mt-10" />}
+
+					<div class="news-prose article-body" data-reveal>
+						<Content />
+					</div>
+
+					<!-- Tag/topik: klaster internal untuk berita terkait dan SEO. -->
+					{tags.length > 0 && (
+						<div class="mt-10 flex flex-wrap items-center gap-2" data-reveal>
+							<span class="mr-1 text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-news-muted">
+								Topik
+							</span>
+							{tags.map((tag) => (
+								<a
+									href={categoryHref(category)}
+									class="news-chip text-[0.75rem] transition-colors hover:border-news-accent hover:text-news-accent"
+								>
+									{tag}
+								</a>
+							))}
+						</div>
+					)}
+
+					<!-- Share: satu baris inline untuk semua breakpoint. -->
+					<div
+						class="mt-8 flex flex-wrap items-center gap-2 border-t border-news-rule pt-7"
+						data-reveal
+					>
+						<span class="mr-1 text-[0.6875rem] font-bold uppercase tracking-[0.14em] text-news-muted">
+							Bagikan
+						</span>
+						<a
+							href={`https://wa.me/?text=${shareText}%20${shareUrl}`}
+							target="_blank"
+							rel="noopener noreferrer"
+							class="news-chip"
+						>
+							WhatsApp
+						</a>
+						<a
+							href={`https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}`}
+							target="_blank"
+							rel="noopener noreferrer"
+							class="news-chip"
+						>
+							LinkedIn
+						</a>
+						<a
+							href={`https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}`}
+							target="_blank"
+							rel="noopener noreferrer"
+							class="news-chip"
+						>
+							X
+						</a>
+						<a href={`mailto:?subject=${shareText}&body=${shareUrl}`} class="news-chip">
+							Email
+						</a>
+					</div>
+
+					<!-- Sebelumnya / berikutnya -->
+					<nav class="mt-8 grid gap-4 sm:grid-cols-2" aria-label="Navigasi berita">
+						{older ? (
+							<a
+								href={newsHref(older)}
+								class="group relative flex flex-col justify-center rounded-2xl border border-news-line bg-news-surface p-5 transition-colors hover:border-news-accent"
+							>
+								<span class="text-[0.625rem] font-bold uppercase tracking-[0.14em] text-news-muted">
+									Sebelumnya
+								</span>
+								<span class="mt-2 font-semibold leading-snug text-news-ink transition-colors group-hover:text-news-accent">
+									{older.data.title}
+								</span>
+							</a>
+						) : (
+							<span class="hidden sm:block" aria-hidden="true"></span>
+						)}
+						{newer && (
+							<a
+								href={newsHref(newer)}
+								class="group relative flex flex-col justify-center rounded-2xl border border-news-line bg-news-surface p-5 text-right transition-colors hover:border-news-accent"
+							>
+								<span class="text-[0.625rem] font-bold uppercase tracking-[0.14em] text-news-muted">
+									Terbaru
+								</span>
+								<span class="mt-2 font-semibold leading-snug text-news-ink transition-colors group-hover:text-news-accent">
+									{newer.data.title}
+								</span>
+							</a>
+						)}
+					</nav>
+				</div>
+
+				<aside class="space-y-8 lg:sticky lg:top-28 lg:self-start">
+					<!--
+						Sidebar diberi tugas nyata: jembatan dari berita ke program.
+						Dulu isinya cuma "Berita Terbaru" + kartu publikasi, jadi
+						pembaca yang datang dari Google tidak punya jalan ke aksi.
+						CTA primer Installation diarahkan ke program terkait kalau
+						artikelnya memang menyebut mitranya; kalau tidak, jatuh ke
+						daftar program — tidak pernah ke tautan yang dikarang.
+					-->
+					{relatedProjects.length > 0 && (
+						<div data-reveal>
+							<EyebrowTag as="h2" tone="news" text="Program Terkait" />
+							<div class="mt-4 space-y-2">
+								{relatedProjects.map((project) => (
+									<a
+										href={`/program/${project.slug}`}
+										class="group block rounded-xl border border-news-line bg-news-surface p-4 transition-colors hover:border-news-accent"
+									>
+										<span class="text-sm font-semibold leading-snug text-news-ink transition-colors group-hover:text-news-accent">
+											{project.title}
+										</span>
+										<span class="mt-1.5 inline-flex items-center gap-1 text-[0.6875rem] font-semibold uppercase tracking-[0.1em] text-news-muted">
+											Lihat program
+											<svg
+												class="h-3 w-3 transition-transform group-hover:translate-x-0.5"
+												viewBox="0 0 12 12"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="1.75"
+												aria-hidden="true"
+											>
+												<path d="M2 6h8M6.5 2.5 10 6l-3.5 3.5" stroke-linecap="round" stroke-linejoin="round" />
+											</svg>
+										</span>
+									</a>
+								))}
+							</div>
+						</div>
+					)}
+
+					<div
+						class="flex flex-col justify-between rounded-2xl bg-news-accent p-6 text-white"
+						data-reveal
+					>
+						<div>
+							<h2 class="text-base font-bold">
+								{relatedProjects.length > 0 ? 'Dukung Program Ini' : 'Lihat Program Kami'}
+							</h2>
+							<p class="mt-2 text-sm leading-relaxed text-white/80">
+								{relatedProjects.length > 0
+									? 'Program ini berjalan bersama mitra. Lihat rincian lingkup, mitra, dan statusnya.'
+									: 'Pendampingan SKALA mencakup isu lingkungan, pemberdayaan, dan tata kelola desa.'}
+							</p>
+						</div>
+						<div class="mt-5">
+							<CTAButton
+								href={relatedProjects.length > 0 ? `/program/${relatedProjects[0].slug}` : '/program'}
+								variant="hero"
+								size="sm"
+							>
+								{relatedProjects.length > 0 ? 'Buka Program' : 'Semua Program'}
+							</CTAButton>
+						</div>
+					</div>
+
+					<div data-reveal>
+						<EyebrowTag as="h2" tone="news" text="Berita Terbaru" />
+						<div class="mt-4 space-y-1">
+							{latest.map((entry) => (
+								<NewsCard item={entry} layout="compact" showCategory={false} />
+							))}
+						</div>
+					</div>
+
+					<div class="border-t border-news-rule pt-6" data-reveal>
+						<EyebrowTag as="h2" tone="news-muted" text="Dokumen lengkap" />
+						<p class="mt-2 text-sm leading-relaxed text-news-body">
+							Laporan, Minutes of Agreement, dan publikasi resmi SKALA.
+						</p>
+						<div class="mt-4">
+							<CTAButton href="/publikasi" variant="outline" size="sm">Lihat Publikasi</CTAButton>
+						</div>
+					</div>
+				</aside>
+			</div>
+		</div>
+	</section>
+
+	<!-- Berita terkait -->
+	{
+		related.length > 0 && (
+			<section class="news-rule bg-news-surface">
+				<div class="container-skala py-16 lg:py-24">
+					<div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+						<div>
+							<EyebrowTag as="h2" tone="news" text="Baca juga" />
+							<h3 class="mt-4 text-3xl font-bold tracking-[-0.02em] text-news-ink sm:text-4xl">
+								Berita terkait
+							</h3>
+						</div>
+						<CTAButton href="/berita" variant="outline" size="sm">Semua Berita</CTAButton>
+					</div>
+
+					<div class="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3" data-reveal-group>
+						{related.map((entry) => (
+							<NewsCard item={entry} />
+						))}
+					</div>
+				</div>
+			</section>
+		)
+	}
+</Layout>

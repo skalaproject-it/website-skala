@@ -1,0 +1,167 @@
+---
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { ClientRouter } from 'astro:transitions';
+import '../styles/global.css';
+
+interface Props {
+	title?: string;
+	description?: string;
+	image?: string;
+	pageType?: 'website' | 'article';
+	navTone?: 'dark' | 'light';
+}
+
+const { title = 'SKALA | Konservasi Alam Bersama Masyarakat', description = '', image = '/og-image.png', pageType = 'website', navTone = 'dark' } = Astro.props;
+
+/* Astro memancarkan pathname dengan garis miring akhir pada build format
+   "directory". Canonical dinormalisasi tanpa garis miring akhir (kecuali root)
+   agar URL yang dipublikasikan konsisten dan tidak terduplikasi. */
+const canonicalPath = Astro.url.pathname.replace(/\/+$/, '');
+const canonicalURL = new URL(canonicalPath || '/', Astro.site);
+
+const defaultDescription =
+	'SKALA adalah yayasan konservasi yang memulihkan ekosistem, merestorasikan hutan, dan memberdayakan Kelompok Tani Hutan di seluruh Indonesia.';
+const pageDescription = description || defaultDescription;
+const pageImage = new URL(image, Astro.site).toString();
+const titleFull = title.includes('SKALA') ? title : `${title} | SKALA`;
+
+/* og:image:type diturunkan dari ekstensi pathname hasil (bukan dari string Mentah),
+   agar URL absolut dari `getImage()` tetap melaporkan tipe yang benar. */
+const ogImageType = `image/${{
+	avif: 'avif',
+	jpg: 'jpeg',
+	jpeg: 'jpeg',
+	png: 'png',
+	webp: 'webp',
+}[new URL(pageImage).pathname.split('.').pop()?.toLowerCase() ?? ''] ?? 'png'}`;
+
+/* Entity description for search engines and AI answer engines. NAP here must
+   stay byte-identical to the footer and the contact page. */
+const orgSchema = {
+	'@context': 'https://schema.org',
+	'@type': 'NGO',
+	name: 'Yayasan Studi Komunitas Alamiah (SKALA)',
+	alternateName: 'SKALA',
+	url: 'https://skalapro.or.id',
+	logo: 'https://skalapro.or.id/skala-logo.png',
+	foundingDate: '2000',
+	email: 'office@skalapro.or.id',
+	telephone: '+62878-7863-8940',
+	address: {
+		'@type': 'PostalAddress',
+		streetAddress: 'Jl. Panawuan No. 5A, Kel. Sukajaya, Kec. Tarogong Kidul, Kab. Garut',
+		addressLocality: 'Garut, Jawa Barat',
+		addressRegion: 'Jawa Barat',
+		postalCode: '44152',
+		addressCountry: 'ID',
+	},
+	areaServed: ['Garut, Jawa Barat', 'Tanggamus, Lampung'],
+};
+---
+
+<!doctype html>
+<html lang="id" class="scroll-smooth">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<meta name="generator" content={Astro.generator} />
+
+		<meta name="theme-color" content="#181818" />
+
+		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+		<link rel="icon" href="/favicon.ico" />
+
+		<title>{titleFull}</title>
+		<meta name="description" content={pageDescription} />
+		<meta name="robots" content="index, follow" />
+
+		{/* Open Graph */}
+		<meta property="og:type" content={pageType} />
+		<meta property="og:site_name" content="SKALA" />
+		<meta property="og:locale" content="id_ID" />
+		<meta property="og:title" content={titleFull} />
+		<meta property="og:description" content={pageDescription} />
+		<meta property="og:url" content={canonicalURL} />
+		<meta property="og:image" content={pageImage} />
+		<meta property="og:image:width" content="1200" />
+		<meta property="og:image:height" content="630" />
+		<meta property="og:image:type" content={ogImageType} />
+
+		{/* Entity data for search engines and AI answer engines */}
+		<script type="application/ld+json" set:html={JSON.stringify(orgSchema)} is:inline />
+
+		{/* Twitter/X */}
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content={titleFull} />
+		<meta name="twitter:description" content={pageDescription} />
+		<meta name="twitter:image" content={pageImage} />
+
+		<link rel="canonical" href={canonicalURL} />
+
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Nunito+Sans:wght@400;500;600;700&display=swap"
+			rel="stylesheet"
+		/>
+
+		<script is:inline>
+			document.documentElement.dataset.js = '1';
+		</script>
+
+		<ClientRouter />
+
+		<slot name="head" />
+	</head>
+	<body>
+		<a
+			href="#main"
+			class="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-olive-soft focus:px-6 focus:py-3 focus:text-sm focus:font-bold focus:text-ink"
+		>
+			Langsung ke konten utama
+		</a>
+		<Header tone={navTone} />
+		<div id="main" class="min-h-screen">
+			<slot />
+		</div>
+		<Footer />
+	</body>
+</html>
+
+<script>
+	import { initMotion, initMarquees } from '../utils/motion';
+
+	let teardown: (() => void) | null = null;
+	let teardownMarquee: (() => void) | null = null;
+	let started = false;
+
+	const run = (): void => {
+		teardown?.();
+		teardownMarquee?.();
+		teardown = initMotion(document);
+		teardownMarquee = initMarquees(document);
+		started = true;
+	};
+
+	// Navigasi client-side: DOM sudah ditukar tapi transisinya masih berjalan
+	// (`astro:page-load` baru menyala SETELAH transisi selesai). Jalankan motion
+	// di sini supaya animasinya benar-benar main di halaman baru.
+	//
+	// Sebelumnya event ini memanggil revealViewport(), yang langsung menambah
+	// class `is-revealed` tanpa animasi. Itu sebabnya pindah halaman tidak
+	// beranimasi sama sekali — hanya reload/akses pertama yang beranimasi.
+	document.addEventListener('astro:after-swap', run);
+
+	// Akses pertama (dan jaring pengaman). `run()` idempoten, tapi lewati
+	// lintasan kedua yang mubazir setelah navigasi.
+	window.addEventListener('astro:page-load', () => {
+		if (!started) run();
+	});
+
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', run);
+	} else {
+		run();
+	}
+</script>

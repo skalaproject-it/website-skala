@@ -1,0 +1,1101 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Manrope", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "Nunito Sans", ui-sans-serif, system-ui, "Segoe UI", sans-serif;
+
+  --color-ink: #ffffff;
+  --color-ink-deep: #142d24;
+  /* Identitas SKALA: hijau hutan, kanvas hangat, serta aksen logo terbatas.
+     Nama token legacy dipertahankan agar komponen berbagi palet yang sama.
+     `ink` tetap putih karena juga digunakan untuk teks di bidang gelap. */
+  --color-canvas: #fafaf7;
+  --color-ink-card: #edf3ee;
+  --color-ink-raise: #e1eae3;
+  --color-ink-rule: #d5dfd6;
+  --color-olive: #245943;
+  --color-olive-soft: #367255;
+  --color-olive-deep: #183e2f;
+  --color-brand-gold: #e6b84a;
+  --color-brand-teal: #247a88;
+  --color-brand-teal-wash: #eaf3f4;
+
+  --color-cream: #202923;
+  --color-cream-dim: #58635c;
+  --color-cream-faint: #58635c;
+
+  --color-mist: rgb(0 0 0 / 0.08);
+
+  --color-ref-panel: #edf3ee;
+  --color-ref-green: #245943;
+  --color-ref-ink: #202923;
+  --color-ref-muted: #58635c;
+  --color-ref-line: #d5dfd6;
+
+  /* --- News desk ramp (/berita + /berita/[slug]) ---------------------
+     Ruang berita memakai identitas editorial sendiri, tidak olive/putih
+     situs utama: kertas hangat, tinta dingin, aksen teal pekat. Semua kontras
+     diuji terhadap --color-news-paper:
+       news-ink      #14161a  15.4:1
+       news-body     #3c4148   9.1:1
+       news-muted    #646c79   4.7:1
+       news-accent   #0f5a63   7.4:1  (putan di atasnya 7.4:1)
+     Token ini hanya dipakai halaman berita, jadi halaman lain tidak berubah.
+
+     Aturan permukaan: kartu (#ffffff) duduk DI ATAS kertas hangat yang
+     dicelup ringan — kartu tetap putih, pemisahan datang dari selisih
+     nada yang tipis (#f5f3ee) plus garis rambut news-line. Jangan
+     digelapkan berlebihan; selisih nada yang hilang-lahin adalah yang
+     membuat tepi kartu tak terlihat, dan itu diselesaikan dengan border. */
+  --color-news-paper: #f5f3ee;
+  --color-news-surface: #ffffff;
+  --color-news-ink: #14161a;
+  --color-news-body: #3c4148;
+  --color-news-muted: #646c79;
+  /* Garis tepi kartu berita: sedikit lebih gelap dari kertas. */
+  --color-news-line: #e2ddce;
+  --color-news-line-soft: #efece5;
+  /* Garis horizontal berita: hairline hangat yang lembut, senada kertas. */
+  --color-news-rule: #ded8c9;
+  --color-news-accent: #0f5a63;
+  --color-news-accent-soft: #157a86;
+  --color-news-accent-wash: #e7efef;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    overflow-x: clip;
+  }
+
+  body {
+    @apply bg-canvas font-sans text-cream antialiased;
+    text-rendering: optimizeLegibility;
+    overflow-x: clip;
+  }
+
+  /* Kartu tanpa border eksplisit tetap punya tepi rambut tipis supaya bidang
+     kartu terpisah jelas dari kanvas. Ditulis di layer base agar utility
+     shadow/ring Tailwind tetap menang bila ada; elemen yang sudah punya border
+     apa pun dikecualikan supaya tidak jadi garis ganda. */
+  [class*='bg-ink-card']:not([class*='border-']),
+  [class*='bg-ref-panel']:not([class*='border-']) {
+    box-shadow: inset 0 0 0 1px var(--color-ref-line);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-serif;
+  }
+
+  /* --- type scale mirrored from the reference (measured computed values) ---
+     The reference only switches to the secondary face (Nunito Sans) for its two
+     display levels; h3 and below stay on Manrope. It applies no letter-spacing
+     at any level, and body copy is weight 300 at a 1.5 leading.
+
+     These live in the base layer, so any page that sets its own size with a
+     utility class still wins — this only fills in the un-styled cases. */
+  h1,
+  h2 {
+    @apply font-semibold;
+    line-height: 1.2;
+    letter-spacing: normal;
+  }
+
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply font-sans font-semibold;
+    line-height: 1.4;
+    letter-spacing: normal;
+  }
+
+  h1 {
+    font-size: 2.5rem;
+  }
+
+  h2 {
+    font-size: 1.875rem;
+  }
+
+  h3 {
+    font-size: 1rem;
+  }
+
+  h4,
+  h5,
+  h6 {
+    font-size: 1.125rem;
+  }
+
+  p {
+    font-weight: 400;
+    line-height: 1.5;
+  }
+
+  blockquote {
+    line-height: 1.4;
+  }
+
+  @media (min-width: 48rem) {
+    h1 {
+      font-size: 4.5rem;
+    }
+
+    h2 {
+      font-size: 3.125rem;
+    }
+
+    h3 {
+      font-size: 1.5rem;
+    }
+  }
+
+  @media (min-width: 80rem) {
+    h1 {
+      font-size: 5.375rem;
+    }
+
+    h2 {
+      font-size: 3.5rem;
+    }
+  }
+
+  ::selection {
+    @apply bg-olive-soft text-ink;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-olive-soft);
+    outline-offset: 3px;
+  }
+}
+
+@layer components {
+  /* --- reference type roles -------------------------------------------------
+     Sizes mirror onearth-conservation.webflow.io (h1 40/72/86, h2 30/50/56,
+     h3 16/24, h4 18, body 16/18, small 14) with the reference's 1.2 display
+     leading, 1.4 sub-heading leading and 1.5 body leading. Prefer these over
+     one-off size utilities so the scale stays in one place. */
+  .ref-h1 {
+    @apply font-serif text-[2.5rem] font-semibold leading-[1.2] sm:text-[4.5rem] xl:text-[5.375rem];
+  }
+
+  .ref-h2 {
+    @apply font-serif text-[1.875rem] font-semibold leading-[1.2] sm:text-[3.125rem] xl:text-[3.5rem];
+  }
+
+  .ref-h3 {
+    @apply font-sans text-[1.5rem] font-semibold leading-[1.4];
+  }
+
+  .ref-h4 {
+    @apply font-sans text-[1.125rem] font-semibold leading-[1.4];
+  }
+
+  .ref-p1 {
+    @apply font-sans text-base font-light leading-[1.5] md:text-lg;
+  }
+
+  .ref-p2 {
+    @apply font-sans text-sm font-light leading-[1.5];
+  }
+
+  .ref-label {
+    @apply font-sans text-[0.625rem] font-semibold uppercase;
+  }
+
+  /* --- inner page hero -------------------------------------------------------
+     Mirrors the reference inner header (onearth `/about`): one centred
+     h2-scale heading over a centred light lead, no buttons or badges. The
+     heading keeps the ref-h2 role (30 / 50 / 56) and the lead keeps ref-p1
+     (16 / 18) instead of the ref-h1 scale used by the home hero, so the home
+     hero stays visually distinct and every inner page matches each other. */
+  .hero-title {
+    @apply m-0 font-serif text-[1.875rem] font-semibold leading-[1.2] text-white;
+    text-align: center;
+    text-wrap: balance;
+
+    @media (min-width: 29.9375rem) {
+      font-size: 2.625rem; /* 42px — reference ≤767px step */
+    }
+
+    @media (min-width: 47.9375rem) {
+      font-size: 3.125rem; /* 50px — reference ≤991px step */
+    }
+
+    @media (min-width: 61.9375rem) {
+      font-size: 3.5rem; /* 56px — reference ≥992px */
+    }
+  }
+
+  .hero-lead {
+    @apply m-0 w-full font-sans text-base font-light leading-[1.5] text-white;
+    text-align: center;
+    text-wrap: pretty;
+
+    @media (min-width: 47.9375rem) {
+      width: 80%;
+      font-size: 1.125rem;
+    }
+
+    @media (min-width: 61.9375rem) {
+      width: 60%;
+      font-size: 1rem; /* reference drops back to 16px on desktop */
+    }
+  }
+
+  /* --- Eyebrow kanonik -------------------------------------------------
+     Satu spesifikasi tipografi untuk seluruh situs: uppercase, semibold,
+     tracking 0.14em, 0.875rem, dengan titik olive 8px di kiri. Sebelumnya
+     ada 8 variasi (10px-14px, tracking 0.10-0.20em, semibold/bold) plus 4
+     warna berbeda, dan EyebrowTag.astro hanya dipakai sebagian halaman.
+
+     Yang SENGAJA tidak ikut diseragamkan karena bukan eyebrow dan punya
+     hierarki sendiri: header tabel, <dt> data (DataRow), label statistik
+     (StatCard), peran tim (TeamCard), tanggal/lokasi, badge di atas foto,
+     dan teks "Baca". Memaksakan satu gaya pada semua itu justru
+     menghapus makna, bukan membuat lebih rapi. */
+  .eyebrow {
+    @apply inline-flex items-center gap-2.5 font-sans text-sm font-semibold uppercase tracking-[0.14em];
+  }
+
+  .eyebrow__dot {
+    @apply h-2 w-2 shrink-0 rounded-full;
+  }
+
+  /* Eyebrow tier hero: tier sendiri (kecil, di atas foto, terpusat) tapi
+     memakai keluarga huruf yang sama — case, weight, dan tracking sama
+     persis dengan .eyebrow, hanya ukurannya yang lebih kecil. */
+  .hero-eyebrow {
+    @apply flex flex-wrap items-center justify-center gap-2.5 font-sans text-[0.6875rem] font-semibold uppercase tracking-[0.14em] text-white/60;
+  }
+
+  .container-skala {
+    margin-inline: auto;
+    width: 100%;
+    max-width: 90rem;
+    padding-inline: 1rem;
+
+    @media (min-width: 40rem) {
+      padding-inline: 2.5rem;
+    }
+
+    @media (min-width: 64rem) {
+      padding-inline: 4rem;
+    }
+  }
+
+  .nav-link {
+    @apply text-sm font-semibold tracking-wide text-white/90;
+    border-radius: 9999px;
+    padding: 0.55rem 1.1rem;
+    transition:
+      background-color 0.25s ease,
+      color 0.25s ease;
+  }
+
+  .nav-link:hover,
+  .nav-link[data-current] {
+    background-color: #fff;
+    color: var(--color-olive-deep);
+  }
+
+  .nav-cta {
+    border-radius: 9999px;
+    border: 1px solid rgb(255 255 255 / 0.4);
+    padding: 0.55rem 1.25rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: #fff;
+    transition:
+      background-color 0.25s ease,
+      color 0.25s ease;
+  }
+
+  .nav-cta:hover {
+    background-color: #fff;
+    color: var(--color-olive-deep);
+  }
+
+  .dd-link {
+    @apply flex items-center justify-between gap-3 rounded-xl px-4 py-2.5 text-sm font-medium text-white/75 transition-colors duration-200 hover:bg-white/10 hover:text-white;
+  }
+
+  /* --- smooth expand/collapse (grid-rows trick), shared by FAQ + mobile nav --- */
+  .acc {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    transition:
+      grid-template-rows 0.45s cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 0.35s ease;
+  }
+
+  details[open] > .acc,
+  .acc.is-open {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+
+  .acc-inner {
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  /* --- floating navbar pill (frosted glass, OnEarth style) --- */
+  .nav-pill {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    margin-top: 1rem;
+    background-color: var(--nav-pill-bg, rgb(255 255 255 / 0.12));
+    -webkit-backdrop-filter: blur(var(--nav-pill-blur, 6px));
+    backdrop-filter: blur(var(--nav-pill-blur, 6px));
+    border-radius: 9999px;
+    padding: 0.5rem 0.5rem 0.5rem 1.5rem;
+    box-shadow: inset 0 2px rgb(255 255 255 / 0.2);
+    will-change: background-color, backdrop-filter;
+  }
+
+  @media (min-width: 1024px) {
+    .nav-pill {
+      margin-top: 1.5rem;
+    }
+  }
+
+  /* ============================================================
+     Navbar mode TERANG (halaman berlatar kertas, mis. artikel berita).
+
+     Dipakai lewat <Header tone="light">. Semua aturan di bawah ini
+     hanya berlaku pada mode itu — mode gelap (default) tidak tersentuh
+     sama sekali, jadi 29 halaman lain tidak berubah.
+
+     Yang diganti:
+     - wordmark mengikuti warna teks header; simbol asli tetap berwarna.
+     - brand + link teks putih -> tinta.
+     - pill: garis rambut putih (glass) -> garis rambut gelap + shadow,
+       supaya ada batasnya di atas kertas.
+     - hover/current dibalik: dark mode = putih, light mode = olive.
+     ============================================================ */
+  [data-nav-tone='light'] .nav-brand {
+    color: var(--color-news-ink, #14161a);
+  }
+
+  [data-nav-tone='light'] .nav-pill {
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.9),
+      0 2px 10px rgb(20 22 26 / 0.06);
+  }
+
+  [data-nav-tone='light'] .nav-link {
+    color: var(--color-news-ink, #14161a);
+  }
+
+  [data-nav-tone='light'] .nav-link:hover,
+  [data-nav-tone='light'] .nav-link[data-current] {
+    background-color: var(--color-olive-deep);
+    color: #fff;
+  }
+
+  [data-nav-tone='light'] .nav-cta {
+    border-color: transparent;
+    background-color: var(--color-olive-deep);
+    color: #fff;
+  }
+
+  [data-nav-tone='light'] .nav-cta:hover {
+    background-color: var(--color-olive);
+    color: #fff;
+  }
+
+  /* Tombol hamburger default-nya bg-white + ikon olive. Di mode gelap itu
+     aman (pill transparan di atas hero gelap). Di mode terang pill-nya
+     sudah putih, jadi tombol putih jadi menghilang — dibalik jadi
+     olive + ikon putih (5.85:1). */
+  [data-nav-tone='light'] .hamburger {
+    background-color: var(--color-olive-deep);
+    color: #fff;
+  }
+
+  /* --- mobile nav dropdown panel (dark glass card) --- */
+  .mobile-nav-shell {
+    visibility: hidden;
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    margin-top: 0.625rem;
+    border: 1px solid rgb(255 255 255 / 0.16);
+    border-radius: 1.5rem;
+    background-color: rgb(24 24 24 / 0.92);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    box-shadow: 0 30px 60px -20px rgb(0 0 0 / 0.6);
+    transition:
+      grid-template-rows 0.5s cubic-bezier(0.4, 0, 0.2, 1),
+      opacity 0.3s ease,
+      visibility 0.5s;
+  }
+
+  .mobile-nav-shell.is-open {
+    visibility: visible;
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+
+  .mobile-nav-shell > div {
+    overflow: hidden;
+    min-height: 0;
+    max-height: calc(100dvh - 7.5rem);
+    overscroll-behavior-y: contain;
+    scrollbar-gutter: stable;
+  }
+
+  .mobile-nav-shell.is-open > div {
+    overflow-y: auto;
+  }
+
+  /* --- desktop dropdown --- */
+  .dd-menu {
+    position: absolute;
+    left: 0;
+    top: calc(100% + 0.5rem);
+    z-index: 50;
+    width: 15rem;
+    border-radius: 1rem;
+    border: 1px solid rgb(255 255 255 / 0.16);
+    background-color: rgb(24 24 24 / 0.94);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    padding: 0.5rem;
+    box-shadow: 0 30px 60px -20px rgb(0 0 0 / 0.6);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(8px);
+    transition:
+      opacity 0.25s ease,
+      transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+      visibility 0.25s;
+  }
+
+  .dropdown:hover > .dd-menu,
+  .dropdown.is-open > .dd-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+  }
+
+  .dd-chevron {
+    transition: transform 0.3s ease;
+  }
+
+  .dropdown:hover .dd-chevron,
+  .dropdown.is-open .dd-chevron {
+    transform: rotate(180deg);
+  }
+
+  /* --- article body (replaces @astrojs/typography prose classes) --- */
+  .article-body {
+    color: var(--color-cream-dim);
+    font-size: 1.0625rem;
+    line-height: 1.85;
+  }
+
+  .article-body > * + * {
+    margin-top: 1.5em;
+  }
+
+  .article-body > p:first-of-type {
+    color: var(--color-cream);
+    font-size: 1.1875rem;
+    line-height: 1.7;
+  }
+
+  .article-body h2 {
+    margin-top: 2.75em;
+    color: var(--color-cream);
+    font-size: 1.5rem;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+
+  .article-body h3 {
+    margin-top: 2.25em;
+    color: var(--color-cream);
+    font-size: 1.25rem;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  .article-body h2 + *,
+  .article-body h3 + * {
+    margin-top: 0.9em;
+  }
+
+  .article-body strong {
+    color: var(--color-cream);
+    font-weight: 600;
+  }
+
+  .article-body em {
+    font-style: italic;
+  }
+
+  .article-body a {
+    color: var(--color-olive-deep);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    transition: color 0.2s ease;
+  }
+
+  .article-body a:hover {
+    color: var(--color-cream);
+  }
+
+  .article-body ul,
+  .article-body ol {
+    padding-left: 1.35em;
+  }
+
+  .article-body ul {
+    list-style: none;
+    padding-left: 0;
+  }
+
+  .article-body ul > li {
+    position: relative;
+    padding-left: 1.75em;
+  }
+
+  .article-body ul > li::before {
+    content: "";
+    position: absolute;
+    left: 0.35em;
+    top: 0.82em;
+    width: 0.4em;
+    height: 0.4em;
+    border-radius: 9999px;
+    background-color: var(--color-olive-soft);
+  }
+
+  .article-body ol {
+    list-style: decimal;
+  }
+
+  .article-body ol::marker,
+  .article-body li::marker {
+    color: var(--color-olive);
+    font-weight: 600;
+  }
+
+  .article-body li + li {
+    margin-top: 0.6em;
+  }
+
+  .article-body blockquote {
+    border-left: 3px solid var(--color-ref-line);
+    padding: 0.35em 0 0.35em 1.5em;
+    color: var(--color-cream);
+    font-family: var(--font-serif);
+    font-size: 1.25rem;
+    font-weight: 500;
+    line-height: 1.55;
+  }
+
+  .article-body blockquote p {
+    margin: 0;
+  }
+
+  .article-body hr {
+    border: 0;
+    border-top: 1px solid var(--color-ink-rule);
+  }
+
+  .article-body img {
+    border-radius: 1rem;
+  }
+
+  .article-body code {
+    border-radius: 0.35em;
+    background-color: var(--color-ink-card);
+    padding: 0.15em 0.4em;
+    font-size: 0.875em;
+  }
+
+  .article-body pre {
+    overflow-x: auto;
+    border-radius: 1rem;
+    background-color: var(--color-ink-deep);
+    padding: 1.25rem;
+    color: #fff;
+    font-size: 0.875rem;
+  }
+
+  .article-body pre code {
+    background: none;
+    padding: 0;
+  }
+
+  .article-body table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    border-collapse: collapse;
+    font-size: 0.9375rem;
+  }
+
+  .article-body th,
+  .article-body td {
+    border-bottom: 1px solid rgb(0 0 0 / 0.1);
+    padding: 0.75rem 1rem;
+    text-align: left;
+    white-space: nowrap;
+  }
+
+  .article-body th {
+    color: var(--color-cream);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  /* --- scroll reveal --- */
+  html[data-js] [data-reveal] {
+    opacity: 0;
+    transform: translateY(20px);
+    transition:
+      opacity 0.7s ease,
+      transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  html[data-js] [data-reveal].is-revealed {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* --- image reveal (scale 1.05/1.06 -> 1 + fade) --- */
+  /* element-level: applies to photo placeholders, hero banners, decorative visuals */
+  html[data-js] [data-image-reveal] {
+    transform: scale(1.05);
+    opacity: 0;
+    transition:
+      transform 1.1s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 0.85s ease;
+  }
+
+  html[data-js] [data-image-reveal].is-revealed {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  /* img-level: applies to real photos rendered inside a data-image-reveal host */
+  html[data-js] [data-image-reveal] img {
+    transform: scale(1.06);
+    opacity: 0.35;
+    transition:
+      transform 1.4s cubic-bezier(0.22, 1, 0.36, 1),
+      opacity 1.1s ease;
+  }
+
+  html[data-js] [data-image-reveal].is-revealed img {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  /* --- hero drop-in (reference: translateY(-50px) + fade outSine 400ms, staggered) --- */
+  html[data-js] [data-hero-drop] > [data-reveal] {
+    opacity: 0;
+    transform: translateY(-50px);
+    transition:
+      opacity 0.4s cubic-bezier(0.39, 0.575, 0.565, 1),
+      transform 0.4s cubic-bezier(0.39, 0.575, 0.565, 1);
+  }
+
+  html[data-js] [data-hero-drop] > [data-reveal].is-revealed {
+    opacity: 1;
+    transform: none;
+  }
+
+  /* --- reference reveal: 35px fade-up, 0.7s, staggered via
+         data-reveal-group + data-reveal-delay (OnEarth scroll motif) --- */
+  html[data-js] .ref-reveal {
+    transform: translateY(35px);
+    transition:
+      opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  html[data-js] .ref-reveal.is-revealed {
+    transform: none;
+  }
+
+  /* --- reference green pill: label slides up inside a clipping box --- */
+  .ref-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 1rem;
+    border-radius: 9999px;
+    background-color: var(--color-ref-green);
+    padding: 0.5rem 0.5rem 0.5rem 1.5rem;
+  }
+
+  .ref-pill-label {
+    position: relative;
+    display: block;
+    overflow: hidden;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: #fff;
+  }
+
+  .ref-pill-label > span {
+    display: block;
+    white-space: nowrap;
+    transition: transform 0.3s ease;
+  }
+
+  .ref-pill-label > span + span {
+    position: absolute;
+    inset: 0 0 auto;
+    transform: translateY(100%);
+  }
+
+  .ref-pill:hover .ref-pill-label > span:first-child,
+  .ref-pill:focus-visible .ref-pill-label > span:first-child {
+    transform: translateY(-100%);
+  }
+
+  .ref-pill:hover .ref-pill-label > span + span,
+  .ref-pill:focus-visible .ref-pill-label > span + span {
+    transform: translateY(0);
+  }
+
+  .ref-pill-arrow {
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    flex-shrink: 0;
+    border-radius: 9999px;
+    background-color: #fff;
+    color: var(--color-ref-green);
+    transition: transform 0.3s ease;
+  }
+
+  .ref-pill:hover .ref-pill-arrow,
+  .ref-pill:focus-visible .ref-pill-arrow {
+    transform: rotate(45deg);
+  }
+
+  /* --- partner logo marquee (reference: continuous horizontal loop) --- */
+  .a-marquee {
+    overflow: hidden;
+    width: 100%;
+    -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+    mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+  }
+
+  .a-marquee-track {
+    display: flex;
+    width: max-content;
+    align-items: center;
+    animation: marquee-scroll var(--marquee-duration, 32s) linear infinite;
+  }
+
+  /* One full repetition of the logo list. Its trailing padding supplies the gap
+     up to the next set, so the measured set width is the true loop period and
+     `initMarquees()` can pick a shift that is always wider than the viewport. */
+  .a-marquee-set {
+    display: flex;
+    align-items: center;
+    gap: 3.5rem;
+    padding-right: 3.5rem;
+  }
+
+  .a-marquee:hover .a-marquee-track {
+    animation-play-state: paused;
+  }
+
+  @keyframes marquee-scroll {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      /* `initMarquees()` menulis --marquee-shift sebagai nilai POSITIF, lalu
+         dikali -1 di sini supaya loop bergerak ke KIRI. Fallback-nya juga
+         harus positif: dengan default -50%, calc(-50% * -1) = +50%, jadi
+         marquee bergerak ke KANAN. Itulah penyebab arahnya kadang ke kiri
+         kadang ke kanan — tergantung berhasil-tidaknya pengukuran JS pada
+         saat itu. 50% dari track selalu kelipatan tepat satu set (track
+         berisi loopCopies*2 set identik), jadi fallback-nya tetap seamless. */
+      transform: translateX(calc(var(--marquee-shift, 50%) * -1));
+    }
+  }
+
+  /* --- news desk (/berita, /berita/[slug], arsip) --------------------
+     Ruang berita punya identitas sendiri: kertas hangat + tinta dingin +
+     aksen teal. Yang dipakai utility inline, hanya yang sulit ditulis
+     sebagai utility yang ditaruh di sini. */
+
+  /* Tipografi artikel berita.
+     Dipakai lewat kelas `.news-prose`, bukan `.article-body` langsung, karena
+     `.article-body` juga dipakai /program/[slug] yang harus tetap pada
+     paletnya. `max-width` itu penting: container situs 90rem (1440px) membuat
+     kolom prosa ~950px — tanpa batas itu satu baris jadi ~110 karakter dan
+     mata kehilangan ujung baris. 68ch ≈ 65–75 karakter, rentang baca ideal. */
+  .news-prose {
+    max-width: 68ch;
+    color: var(--color-news-body);
+    font-size: 1.0625rem;
+    line-height: 1.75;
+    text-wrap: pretty;
+  }
+
+  .news-prose > p:first-of-type {
+    color: var(--color-news-ink);
+    font-size: 1.125rem;
+    line-height: 1.7;
+  }
+
+  .news-prose h2,
+  .news-prose h3,
+  .news-prose strong {
+    color: var(--color-news-ink);
+  }
+
+  .news-prose h2 {
+    margin-top: 2.5em;
+    font-size: 1.375rem;
+    letter-spacing: -0.012em;
+    line-height: 1.3;
+  }
+
+  .news-prose h3 {
+    margin-top: 2em;
+    font-size: 1.1875rem;
+    line-height: 1.35;
+  }
+
+  .news-prose a {
+    color: var(--color-news-accent);
+    text-decoration-color: var(--color-news-accent-soft);
+  }
+
+  .news-prose a:hover {
+    color: var(--color-news-accent-soft);
+  }
+
+  .news-prose ul > li::before,
+  .news-prose ol::marker,
+  .news-prose li::marker {
+    color: var(--color-news-accent);
+  }
+
+  /* Kutipan. Diardown dari sekadar garis aksen menjadi kartu pull-quote:
+     latar aksen sangat lembut, garis tepi rambut, dan tanda kutip besar di
+     kanan atas supaya tidak memakan alur baca. */
+  .news-prose blockquote {
+    position: relative;
+    margin-top: 2.25em;
+    padding: 1.5rem 1.75rem;
+    border: 0;
+    border-radius: 0.875rem;
+    background-color: var(--color-news-accent-wash);
+    box-shadow: inset 0 0 0 1px rgb(15 90 99 / 0.1);
+    color: var(--color-news-ink);
+    font-family: var(--font-serif);
+    font-size: 1.125rem;
+    font-weight: 500;
+    line-height: 1.6;
+    letter-spacing: -0.005em;
+  }
+
+  .news-prose blockquote::after {
+    content: "\201D";
+    position: absolute;
+    top: 0.35rem;
+    right: 0.9rem;
+    color: var(--color-news-accent);
+    font-family: var(--font-serif);
+    font-size: 2.75rem;
+    line-height: 1;
+    opacity: 0.22;
+    pointer-events: none;
+  }
+
+  .news-prose blockquote p {
+    margin: 0;
+  }
+
+  .news-prose blockquote p + p {
+    margin-top: 0.75em;
+  }
+
+  .news-prose blockquote cite {
+    display: block;
+    margin-top: 0.9em;
+    color: var(--color-news-muted);
+    font-family: var(--font-sans);
+    font-size: 0.8125rem;
+    font-style: normal;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .news-prose blockquote cite::before {
+    content: "\2014\00a0";
+  }
+
+  /* Judul pembuka artikel. clamp lama sampai 3.75rem (60px) terasa kebesaran;
+     diturunkan ke 44px agar hierarki tetap kuat tapi tidak menimpa halaman. */
+  .news-display {
+    font-size: clamp(1.75rem, 1.05rem + 2.3vw, 2.75rem);
+    font-weight: 600;
+    letter-spacing: -0.028em;
+    line-height: 1.14;
+    text-wrap: balance;
+  }
+
+  /* Garis horizontal berita: tegas, sewarna tinta. */
+  .news-rule {
+    border-top: 1px solid var(--color-news-rule);
+  }
+
+  /* Masthead artikel: pita OLIVE SOLID di belakang navbar, tanpa gradien.
+
+     Gradien ini sudah dicoba berkali-kali (tinggi, hue, jumlah stop) dan
+     tetap terbaca jelek. Paramsalahnya bukan parameternya — gradien hanya
+     ada karena navbar global itu fixed dengan logo putih, jadi setiap
+     gradien hanyalah cara menutupi ketergantungan itu. Pita solid
+     memotong masalah di akar: satu warna, satu bentuk, tidak ada yang
+     perlu "dibuat halus".
+     Tinggi pita = tinggi pill navbar (margin-top 1rem/1.5rem + isi 60px),
+     jadi pita menutup persis area navbar tanpa celah. Setelah pita
+     ter-scroll, pill navbar berubah jadi gelap dan menopang logo putih
+     dengan kontrasnya sendiri, jadi tidak perlu warna apa pun di badan
+     artikel.
+
+     Warna pitanya lebih gelap dari --color-olive (#666832) dengan alasan
+     teknis, bukan selera: pill navbar menumpuk 12% putih di atas pita,
+     jadi warna effectively jadi lebih terang. Di #666832 teks navigasi
+     14px cuma dapat 3.76:1 — di bawah AA. #4b5027 menaikkannya ke 5.11:1
+     (logo 6.09:1). Mencerahkan pita tanpa menulis ulang navbar global
+     akan selalu membuat teks putih tidak terbaca, dan itu tidak bisa
+     dinegosiasi. */
+  .news-masthead {
+    background-color: #4b5027;
+  }
+  /* Chip filter/arsip. */
+  .news-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid var(--color-news-line);
+    border-radius: 9999px;
+    background: var(--color-news-surface);
+    padding: 0.5rem 0.9375rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--color-news-body);
+    transition:
+      border-color 0.2s ease,
+      background-color 0.2s ease,
+      color 0.2s ease;
+  }
+
+  .news-chip:hover {
+    border-color: var(--color-news-accent);
+    color: var(--color-news-accent);
+  }
+
+  .news-chip[aria-current='true'] {
+    border-color: var(--color-news-accent);
+    background: var(--color-news-accent);
+    color: #fff;
+  }
+
+  /* Kartu berita: tepi rambut + bayangan sangat tipis, elevate saat hover. */
+  .news-card {
+    background: var(--color-news-surface);
+    border: 1px solid var(--color-news-line);
+    border-radius: 1rem;
+    overflow: hidden;
+    transition:
+      border-color 0.25s ease,
+      box-shadow 0.25s ease,
+      transform 0.25s ease;
+  }
+
+  .news-card:hover {
+    border-color: var(--color-news-line-soft);
+    box-shadow: 0 14px 34px -20px rgb(20 22 26 / 0.4);
+    transform: translateY(-2px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .news-card:hover {
+      transform: none;
+    }
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto !important;
+  }
+
+  html[data-js] [data-reveal],
+  html[data-js] .ref-reveal,
+  html[data-js] [data-image-reveal],
+  html[data-js] [data-image-reveal] img,
+  html[data-js] [data-hero-drop] > [data-reveal],
+  .ref-pill-label > span,
+  .ref-pill-arrow,
+  .acc,
+  .mobile-nav-shell,
+  .dd-menu,
+  #site-header,
+  .a-marquee-track {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+    animation: none !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001s !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+@media print {
+  html[data-js] [data-reveal],
+  html[data-js] [data-reveal].is-revealed,
+  html[data-js] [data-image-reveal],
+  html[data-js] [data-image-reveal].is-revealed,
+  html[data-js] [data-image-reveal] img {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  #site-header,
+  .mobile-nav-shell,
+  .dd-menu {
+    background: transparent !important;
+    backdrop-filter: none !important;
+  }
+}
